@@ -12,8 +12,14 @@ on:
 jobs:
   # This workflow contains a single job called "greet"
   doclone:
+    
+    # set up a matrix, which can force the job to run on all runners
+    strategy:
+      matrix:
+        targets: [edge1]
+        
     # The type of runner that the job will run on
-    runs-on: edge-jetson
+    runs-on: ${{ matrix.targets }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
