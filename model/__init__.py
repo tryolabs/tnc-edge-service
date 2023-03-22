@@ -10,3 +10,5 @@ from .gpsdata import GpsData
 from .deckhandevent import DeckhandEvent
 
 from .fishaidata import FishAiData
+
+from .internetdata import InternetData, InternetDataView

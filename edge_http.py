@@ -1,3 +1,4 @@
+import click
 
 from flask import Flask
 from flask_admin import Admin
@@ -7,7 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
 
-from model import Base as ModelBase, RiskVector, RiskVectorModelView, Test, TestModelView, GpsData, FishAiData
+from model import Base as ModelBase, RiskVector, RiskVectorModelView, Test, TestModelView, GpsData, FishAiData, InternetData, InternetDataView
 from vector import GpsVector
 
 import sqlite3
@@ -33,21 +34,28 @@ allvectorcode = [
     # GpsVector(SessionMaker)
 ]
 
-with sqlite3.connect("db.db") as conn:
-    c = conn.cursor()  # cursor
+@click.command()
+@click.option('--port', default=50000)
+def serve(port):
+    with sqlite3.connect("db.db") as conn:
+        c = conn.cursor()  # cursor
 
-    admin = Admin(app, name='Risk Assesment', template_mode='bootstrap3')
+        admin = Admin(app, name='Risk Assesment', template_mode='bootstrap3')
 
 
-    # bind an individual session to a connection
+        # bind an individual session to a connection
 
-    # with engine.connect() as connection:
-    #     with Session(bind=connection) as session:
-    with SessionMaker() as session:
-            # work with session
-            admin.add_view(RiskVectorModelView(session))
-            admin.add_view(TestModelView(session))
-            admin.add_view(ModelView(GpsData, session))
-            admin.add_view(ModelView(FishAiData, session))
+        # with engine.connect() as connection:
+        #     with Session(bind=connection) as session:
+        with SessionMaker() as session:
+                # work with session
+                admin.add_view(RiskVectorModelView(session))
+                admin.add_view(TestModelView(session))
+                admin.add_view(ModelView(GpsData, session))
+                admin.add_view(ModelView(FishAiData, session))
+                admin.add_view(InternetDataView(session))
 
-            app.run(port=50000)
+                app.run(port=port)
+
+if __name__ == '__main__':
+    serve()

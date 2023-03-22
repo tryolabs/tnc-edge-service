@@ -10,7 +10,8 @@ from model import Base, RiskVector, Test, T
 
 import sqlite3
 
-from model.gpsdata import GpsData
+from model.internetdata import InternetData
+from model import FishAiData, InternetData, GpsData
 engine = create_engine("sqlite:///db.db", echo=True)
 SessionMaker = sessionmaker(engine)
 
@@ -40,6 +41,14 @@ def clear_db(session: Session):
     for gpsdata in result:
         """gpsdata is a tuple, because session can return multiple types per row"""
         session.delete(gpsdata[0])
+    result = session.execute(select(InternetData))
+    for inetdata in result:
+        """inetdata is a tuple, because session can return multiple types per row"""
+        session.delete(inetdata[0])
+    result = session.execute(select(FishAiData))
+    for fishaidata in result:
+        """fishaidata is a tuple, because session can return multiple types per row"""
+        session.delete(fishaidata[0])
     session.commit()
 
 
@@ -107,7 +116,13 @@ def cli(cleardb):
                     },
                     {
                         "name": "ETP Fate",
-                        "id": 14}
+                        "id": 14
+                    },
+                    {
+                        "name": "InternetVector",
+                        "id": 15,
+                        "configblob": "{\"target_ips\":[\"8.8.8.8\",\"1.1.1.1\",\"208.67.222.222\",\"9.9.9.9\"]}"
+                    },
                 ],
                 "ts": [
                     {
@@ -133,6 +148,19 @@ def cli(cleardb):
                     {
                         "sentence": "$GPRMC,210230,A,3855.4487,N,09446.0071,W,0.0,076.2,130495,003.8,E*69",
                     }
+                ],
+                "fishaidata": [
+                    {
+                        "video_uri":"does_not_exist.mov",
+                        "cocoannotations_uri":"coco_labels_example_oneclump.json"
+                    },
+                    {
+                        "video_uri":"dne2.mov",
+                        "cocoannotations_uri":"coco_labels_example_twoclumps.json"
+                    }
+                ],
+                "inetdata": [
+                    
                 ]
             }
             print(objs["rvs"])
@@ -141,6 +169,8 @@ def cli(cleardb):
             session.add_all(to_add)
             session.add_all(list(map(lambda ts: Test(**ts), objs["ts"])))
             session.add_all(list(map(lambda gpsdata: GpsData(**gpsdata), objs["gpsdata"])))
+            session.add_all(list(map(lambda fishaidata: FishAiData(**fishaidata), objs["fishaidata"])))
+            session.add_all(list(map(lambda inetdata: InternetData(**inetdata), objs["inetdata"])))
             session.commit()
 
 if __name__ == "__main__":

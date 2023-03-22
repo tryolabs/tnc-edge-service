@@ -1,5 +1,6 @@
 
 if ! which iftop ; then sudo apt -y install iftop ; fi
+if ! which traceroute ; then sudo apt -y install traceroute ; fi
 
 WRITE_RTC_UDEV_RULE=0
 
