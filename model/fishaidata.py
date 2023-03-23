@@ -8,7 +8,7 @@ class FishAiData(Base):
     id = Column(Integer, primary_key=True)
     video_uri = Column(String)
     cocoannotations_uri = Column(String)
-    datetime = Column(DateTime, server_default=text("(datetime('now'))"))
+    datetime = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
 
     def __str__(self) -> str:
          return 'FishAiData(' + ', '.join(

@@ -21,7 +21,7 @@ class Test(Base):
     name = Column(String)
     type = Column(Enum(T))
     vector_id = Column(Integer, ForeignKey(RiskVector.id))
-    vector = relationship("RiskVector")
+    vector = relationship("RiskVector", back_populates="tests")
     risk = Column(Float)
     detail = Column(String)
     # fk = ForeignKeyConstraint(['id'], [RiskVector.id])
@@ -44,8 +44,10 @@ class TestModelView(ModelView):
     can_delete = True
     column_display_pk = True
     column_hide_backrefs = False
-    column_list = ["id","name","type","vector", "risk", "detail"]
+    column_list = ["id","name","type","vector_id", "vector", "risk", "detail"]
     column_searchable_list = ["name"]
+    column_filters = ["vector_id"]
+    # column_select_related_list=['vector']
     # inline_models = (RiskVector,)
     
 

@@ -3,3 +3,4 @@ flask_admin
 sqlalchemy<2.0
 click
 pynmeagps
+psycopg2

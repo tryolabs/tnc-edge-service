@@ -113,7 +113,7 @@ After=network.target
 User=edge
 Group=edge
 WorkingDirectory=/home/edge/tnc-edge-service
-ExecStart=./venv/bin/python3 edge_http.py
+ExecStart=/home/edge/tnc-edge-service/venv/bin/python3 edge_http.py
 Restart=always
 RestartSec=30
 
@@ -129,3 +129,35 @@ EOF
     sudo systemctl start "tnc-edge-http.service"
 fi
 
+
+if ! systemctl status postgresql ; then
+  sudo apt -y install postgresql
+fi
+
+if ! systemctl is-enabled postgresql ; then
+  sudo systemctl daemon-reload 
+  sudo systemctl enable postgresql
+fi
+
+if ! systemctl is-active postgresql ; then
+  sudo systemctl start postgresql
+  sleep 2
+  if ! systemctl is-active postgresql ; then
+      echo "fatal error with postgresql server"
+      echo "fix and rerun this script"
+      exit 1
+  fi
+fi
+
+if ! ( echo "select 1;" | psql postgres ) ; then
+  sudo -u postgres psql <<EOF
+CREATE USER edge;
+EOF
+fi
+
+if ! ( echo "\dt;" | psql edge ) ; then
+  sudo -u postgres psql <<EOF
+CREATE DATABASE edge;
+GRANT ALL ON DATABASE edge TO edge;
+EOF
+fi

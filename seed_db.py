@@ -12,8 +12,6 @@ import sqlite3
 
 from model.internetdata import InternetData
 from model import FishAiData, InternetData, GpsData
-engine = create_engine("sqlite:///db.db", echo=True)
-SessionMaker = sessionmaker(engine)
 
 # app = Flask(__name__)
 # app.config.from_object('config.defaults')
@@ -24,9 +22,6 @@ SessionMaker = sessionmaker(engine)
 
 # set optional bootswatch theme
 # app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
-
-
-Base.metadata.create_all(engine)
 
 def clear_db(session: Session):
     result = session.execute(select(Test))
@@ -54,124 +49,129 @@ def clear_db(session: Session):
 
 @click.command()
 @click.option('--cleardb', default=False, is_flag=True)
-def cli(cleardb):
+@click.option('--dbname', default="edge")
+@click.option('--dbuser', default="edge")
+def cli(cleardb, dbname, dbuser):
     
-    with sqlite3.connect("db.db") as conn:
-        c = conn.cursor()  # cursor
+    # engine = create_engine("sqlite:///db.db", echo=True)
+    engine = create_engine("postgresql+psycopg2://%s@/%s"%(dbuser, dbname), echo=True)
+    SessionMaker = sessionmaker(engine)
 
-        # admin = Admin(app, name='Risk Assesment', template_mode='bootstrap3')
+    Base.metadata.create_all(engine)
+
+    # admin = Admin(app, name='Risk Assesment', template_mode='bootstrap3')
 
 
-        # bind an individual session to a connection
+    # bind an individual session to a connection
 
-        # with engine.connect() as connection:
-        #     with Session(bind=connection) as session:
-        with SessionMaker() as session:
-            if cleardb:
-                clear_db(session)
-            objs = {
-                "rvs": [
-                    {
-                        "name": "AI High Risk Species ID",
-                        "id": 1},
-                    {
-                        "name": "Total Catch Count Parity",
-                        "id": 2},
-                    {
-                        "name": "Target Catch Count Parity",
-                        "id": 3},
-                    {
-                        "name": "ETP Catch Count Parity",
-                        "id": 4},
-                    {
-                        "name": "Lead Type",
-                        "id": 5},
-                    {
-                        "name": "Hook Type",
-                        "id": 6},
-                    {
-                        "name": "AI ETP interactions",
-                        "id": 7},
-                    {
-                        "name": "AI Bycatch Total",
-                        "id": 8},
-                    {
-                        "name": "Past Risk Score",
-                        "id": 9},
-                    {
-                        "name": "eLog Reported Issues",
-                        "id": 10},
-                    {
-                        "name": "EM Health Check",
-                        "id": 11},
-                    {
-                        "name": "GpsVector",
-                        "id": 12,
-                        "configblob": "{\"boundary_vertices\":[[36.9756611, -122.0273566],[36.9758839, -122.0255113],[36.9736554, -122.0240521],[36.9694039, -122.0231509],[36.9686324, -122.0227218],[36.9683924, -122.0248246],[36.9690267, -122.0263481],[36.9734497, -122.0270348]]}"
-                    },
-                    {
-                        "name": "GpsVector",
-                        "id": 13,
-                        "configblob": "{\"boundary_vertices\":[[40.741895, -73.989308],[7.779557356666465, -66.23373040714596],[-2.0933860877580064, -129.51233698413918],[49.89708418179586, -148.18616354042646]]}"
-                    },
-                    {
-                        "name": "ETP Fate",
-                        "id": 14
-                    },
-                    {
-                        "name": "InternetVector",
-                        "id": 15,
-                        "configblob": "{\"target_ips\":[\"8.8.8.8\",\"1.1.1.1\",\"208.67.222.222\",\"9.9.9.9\"]}"
-                    },
-                ],
-                "ts": [
-                    {
-                        "name": "t1",
-                        "type": T.one,
-                        "vector_id": 1
-                    },
-                    {
-                        "name": "t2",
-                        "type": T.one,
-                        "vector_id": 1
-                    },
-                    {
-                        "name": "t3",
-                        "type": T.one,
-                        "vector_id": 2
-                    }
-                ],
-                "gpsdata": [
-                    {
-                        "sentence": "$GPGGA,210230,3855.4487,N,09446.0071,W,1,07,1.1,370.5,M,-29.5,M,,*7A"
-                    },
-                    {
-                        "sentence": "$GPRMC,210230,A,3855.4487,N,09446.0071,W,0.0,076.2,130495,003.8,E*69",
-                    }
-                ],
-                "fishaidata": [
-                    {
-                        "video_uri":"does_not_exist.mov",
-                        "cocoannotations_uri":"coco_labels_example_oneclump.json"
-                    },
-                    {
-                        "video_uri":"dne2.mov",
-                        "cocoannotations_uri":"coco_labels_example_twoclumps.json"
-                    }
-                ],
-                "inetdata": [
-                    
-                ]
-            }
-            print(objs["rvs"])
-            to_add = list(map(lambda rv: RiskVector(**rv), objs["rvs"]))
-            print(to_add)
-            session.add_all(to_add)
-            session.add_all(list(map(lambda ts: Test(**ts), objs["ts"])))
-            session.add_all(list(map(lambda gpsdata: GpsData(**gpsdata), objs["gpsdata"])))
-            session.add_all(list(map(lambda fishaidata: FishAiData(**fishaidata), objs["fishaidata"])))
-            session.add_all(list(map(lambda inetdata: InternetData(**inetdata), objs["inetdata"])))
-            session.commit()
+    # with engine.connect() as connection:
+    #     with Session(bind=connection) as session:
+    with SessionMaker() as session:
+        if cleardb:
+            clear_db(session)
+        objs = {
+            "rvs": [
+                {
+                    "name": "AI High Risk Species ID",
+                    "id": 1},
+                {
+                    "name": "Total Catch Count Parity",
+                    "id": 2},
+                {
+                    "name": "Target Catch Count Parity",
+                    "id": 3},
+                {
+                    "name": "ETP Catch Count Parity",
+                    "id": 4},
+                {
+                    "name": "Lead Type",
+                    "id": 5},
+                {
+                    "name": "Hook Type",
+                    "id": 6},
+                {
+                    "name": "AI ETP interactions",
+                    "id": 7},
+                {
+                    "name": "AI Bycatch Total",
+                    "id": 8},
+                {
+                    "name": "Past Risk Score",
+                    "id": 9},
+                {
+                    "name": "eLog Reported Issues",
+                    "id": 10},
+                {
+                    "name": "EM Health Check",
+                    "id": 11},
+                {
+                    "name": "GpsVector",
+                    "id": 12,
+                    "configblob": "{\"boundary_vertices\":[[36.9756611, -122.0273566],[36.9758839, -122.0255113],[36.9736554, -122.0240521],[36.9694039, -122.0231509],[36.9686324, -122.0227218],[36.9683924, -122.0248246],[36.9690267, -122.0263481],[36.9734497, -122.0270348]]}"
+                },
+                {
+                    "name": "GpsVector",
+                    "id": 13,
+                    "configblob": "{\"boundary_vertices\":[[40.741895, -73.989308],[7.779557356666465, -66.23373040714596],[-2.0933860877580064, -129.51233698413918],[49.89708418179586, -148.18616354042646]]}"
+                },
+                {
+                    "name": "ETP Fate",
+                    "id": 14
+                },
+                {
+                    "name": "InternetVector",
+                    "id": 15,
+                    "configblob": "{\"target_ips\":[\"8.8.8.8\",\"1.1.1.1\",\"208.67.222.222\",\"9.9.9.9\"]}"
+                },
+            ],
+            "ts": [
+                {
+                    "name": "t1",
+                    "type": T.one,
+                    "vector_id": 1
+                },
+                {
+                    "name": "t2",
+                    "type": T.one,
+                    "vector_id": 1
+                },
+                {
+                    "name": "t3",
+                    "type": T.one,
+                    "vector_id": 2
+                }
+            ],
+            "gpsdata": [
+                {
+                    "sentence": "$GPGGA,210230,3855.4487,N,09446.0071,W,1,07,1.1,370.5,M,-29.5,M,,*7A"
+                },
+                {
+                    "sentence": "$GPRMC,210230,A,3855.4487,N,09446.0071,W,0.0,076.2,130495,003.8,E*69",
+                }
+            ],
+            "fishaidata": [
+                {
+                    "video_uri":"does_not_exist.mov",
+                    "cocoannotations_uri":"coco_labels_example_oneclump.json"
+                },
+                {
+                    "video_uri":"dne2.mov",
+                    "cocoannotations_uri":"coco_labels_example_twoclumps.json"
+                }
+            ],
+            "inetdata": [
+                
+            ]
+        }
+        print(objs["rvs"])
+        to_add = list(map(lambda rv: RiskVector(**rv), objs["rvs"]))
+        print(to_add)
+        session.add_all(to_add)
+        session.add_all(list(map(lambda ts: Test(**ts), objs["ts"])))
+        session.add_all(list(map(lambda gpsdata: GpsData(**gpsdata), objs["gpsdata"])))
+        session.add_all(list(map(lambda fishaidata: FishAiData(**fishaidata), objs["fishaidata"])))
+        session.add_all(list(map(lambda inetdata: InternetData(**inetdata), objs["inetdata"])))
+        session.commit()
 
 if __name__ == "__main__":
     cli()

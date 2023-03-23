@@ -7,7 +7,7 @@ class GpsData(Base):
 
     id = Column(Integer, primary_key=True)
     sentence = Column(String)
-    datetime = Column(DateTime, server_default=text("(datetime('now'))"))
+    datetime = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
 
     def __str__(self) -> str:
          return 'GpsData(' + ', '.join(

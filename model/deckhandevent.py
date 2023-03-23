@@ -10,6 +10,6 @@ class DeckhandEvent(Base):
 
     id = Column(Integer, primary_key=True)
     jsonblob = Column(String)
-    datetime = Column(DateTime, server_default=text("(datetime('now'))"))
+    datetime = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
     
     

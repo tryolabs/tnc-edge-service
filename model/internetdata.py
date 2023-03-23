@@ -11,7 +11,7 @@ class InternetData(Base):
     ping = Column(Float())
     packetloss = Column(Float())
     returncode = Column(Integer())
-    datetime = Column(DateTime, server_default=text("(datetime('now'))"))
+    datetime = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
     # fk = ForeignKeyConstraint(['id'], [RiskVector.id])
 
     def __str__(self) -> str:
