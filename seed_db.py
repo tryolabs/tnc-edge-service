@@ -123,6 +123,11 @@ def cli(cleardb, dbname, dbuser):
                     "id": 15,
                     "configblob": "{\"target_ips\":[\"8.8.8.8\",\"1.1.1.1\",\"208.67.222.222\",\"9.9.9.9\"]}"
                 },
+                {
+                    "name": "EquipmentOutageAggVector",
+                    "id": 16,
+                    "configblob": "{\"observed_riskvector_ids\":[15]}"
+                },
             ],
             "ts": [
                 {

@@ -43,8 +43,6 @@ shell_enc = next(findencoding()).name
 # print(enc)
 
 class InternetVector():
-    rv: RiskVector
-
     target_ips = []
 
     # tests = relationship("Test")

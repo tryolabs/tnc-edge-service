@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 import os
 
 from model import Base as ModelBase, RiskVector, RiskVectorModelView, Test, TestModelView
-from vector import GpsVector, FishAiEventsComeInFourHourBurstsVector, InternetVector
+from vector import GpsVector, FishAiEventsComeInFourHourBurstsVector, InternetVector, EquipmentOutageAggVector
 
 import sqlite3
 from datetime import datetime, timedelta, timezone
@@ -45,6 +45,7 @@ def main(interval_hours, interval_minutes, dbname, dbuser):
         gps_vectors = []
         fishai_vectors = []
         inet_vectors = []
+        eov_vectors = []
 
         for v in q.all():
             print("start of vector", v)
@@ -66,6 +67,13 @@ def main(interval_hours, interval_minutes, dbname, dbuser):
                 inet_vectors.append(f)
                 res = f.execute(daterange)
                 print("end of vector", res)
+
+            if v.name == EquipmentOutageAggVector.__name__:
+                eov = EquipmentOutageAggVector(session, v)
+                eov_vectors.append(eov)
+                res = eov.execute(daterange)
+                print("end of vector", res)
+
 
 
         for v in all_vectors:

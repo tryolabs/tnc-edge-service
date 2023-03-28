@@ -5,7 +5,7 @@ from .riskvector import RiskVector
 from enum import Enum as PyEnum
 
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, Enum, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Enum, ForeignKey, Float, DateTime, text
 
 
 class T(PyEnum):
@@ -24,6 +24,7 @@ class Test(Base):
     vector = relationship("RiskVector", back_populates="tests")
     risk = Column(Float)
     detail = Column(String)
+    datetime = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
     # fk = ForeignKeyConstraint(['id'], [RiskVector.id])
 
     def __str__(self) -> str:
@@ -33,6 +34,7 @@ class Test(Base):
             'name',
             'type',
             'vector_id',
+            'datetime',
         ]]) + ')'
 
 
@@ -44,9 +46,9 @@ class TestModelView(ModelView):
     can_delete = True
     column_display_pk = True
     column_hide_backrefs = False
-    column_list = ["id","name","type","vector_id", "vector", "risk", "detail"]
+    column_list = ["id","name","type","vector", "risk", "detail", "datetime"]
     column_searchable_list = ["name"]
-    column_filters = ["vector_id"]
+    column_filters = ["vector_id", "datetime"]
     # column_select_related_list=['vector']
     # inline_models = (RiskVector,)
     

@@ -134,6 +134,10 @@ if ! systemctl status postgresql ; then
   sudo apt -y install postgresql
 fi
 
+if [ -z "$(find /usr/include/ -name libpq-fe.h)" ] ; then
+  sudo apt -y install libpq-dev
+fi
+
 if ! systemctl is-enabled postgresql ; then
   sudo systemctl daemon-reload 
   sudo systemctl enable postgresql
