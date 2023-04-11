@@ -22,7 +22,7 @@ class Test(Base):
     type = Column(Enum(T))
     vector_id = Column(Integer, ForeignKey(RiskVector.id))
     vector = relationship("RiskVector", back_populates="tests")
-    risk = Column(Float)
+    score = Column(Float)
     detail = Column(String)
     datetime = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
     # fk = ForeignKeyConstraint(['id'], [RiskVector.id])
@@ -46,7 +46,7 @@ class TestModelView(ModelView):
     can_delete = True
     column_display_pk = True
     column_hide_backrefs = False
-    column_list = ["id","name","type","vector", "risk", "detail", "datetime"]
+    column_list = ["id","name","type","vector", "score", "detail", "datetime"]
     column_searchable_list = ["name"]
     column_filters = ["vector_id", "datetime"]
     # column_select_related_list=['vector']

@@ -45,7 +45,7 @@ class GpsVector():
             if not pointInBoundingBox(point, self.boundarysegments):
                 gpsPointsOutOfBounds += 1
             
-        result.risk = -1.0/(gpsPointsOutOfBounds+1.0) + 1.0
+        result.score = -1.0/(gpsPointsOutOfBounds+1.0) + 1.0
         
         self.session.commit()
 

@@ -41,7 +41,7 @@ class EquipmentOutageAggVector():
 
         for test in tests.all():
             print("expweighted: %s outage: %d "%(expweighted,outage))
-            if test.risk > 0.0:
+            if test.score > 0.0:
                 outage += 1
             else:
                 if outage > 0:
@@ -53,7 +53,7 @@ class EquipmentOutageAggVector():
         
         print("expweighted: %s outage: %d "%(expweighted,outage))
         
-        result.risk = 1.0 - 1.0/(expweighted+1.0)
+        result.score = 1.0 - 1.0/(expweighted+1.0)
         
         self.session.commit()
 

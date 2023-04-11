@@ -2,5 +2,8 @@ flask
 flask_admin
 sqlalchemy<2.0
 click
+nmeasim
 pynmeagps
 psycopg2
+Flask-SQLAlchemy
+alembic

@@ -113,6 +113,7 @@ After=network.target
 User=edge
 Group=edge
 WorkingDirectory=/home/edge/tnc-edge-service
+Environment=ENVIRONMENT=/home/edge/tnc-edge-service/config/prod.py
 ExecStart=/home/edge/tnc-edge-service/venv/bin/python3 edge_http.py
 Restart=always
 RestartSec=30

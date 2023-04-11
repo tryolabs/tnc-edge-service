@@ -28,4 +28,5 @@ jobs:
       run: echo "Hello ${{ github.event.inputs.name }}"
     - uses: actions/checkout@v3
     - run: rsync -avz . /home/edge/tnc-edge-service
+    - run: bash /home/edge/tnc-edge-service/scripts/app-install.sh
     

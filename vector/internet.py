@@ -78,14 +78,14 @@ class InternetVector():
             self.session.commit()
         
         f = filter(lambda data: data.returncode != 0 or data.packetloss and data.packetloss > 33.4 , datas)
-        result.risk = -1.0/(len(list(f))+1.0) + 1.0
+        result.score = -1.0/(len(list(f))+1.0) + 1.0
         
         self.session.commit()
 
         return result
 
 def traceroute(ip):
-    cmd = "traceroute -m 6 %s | grep -E '^\s*[0-9][0-9]*\s*' | grep -v '\* \* \*' | awk '{{print $2 \" \" $3}}' "%(ip)
+    cmd = "traceroute -m 12 %s | grep -E '^\s*[0-9][0-9]*\s*' | grep -v '\* \* \*' | awk '{{print $2 \" \" $3}}' "%(ip)
     p = subprocess.run(cmd, shell=True, capture_output=True, encoding=shell_enc)
     lines = json.dumps(p.stdout.strip().split("\n"))
     

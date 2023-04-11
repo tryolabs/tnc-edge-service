@@ -12,3 +12,5 @@ from .deckhandevent import DeckhandEvent
 from .fishaidata import FishAiData
 
 from .internetdata import InternetData, InternetDataView
+
+from .boatschedule import BoatSchedule

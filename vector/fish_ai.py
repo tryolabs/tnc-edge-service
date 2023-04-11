@@ -93,7 +93,7 @@ class FishAiEventsComeInFourHourBurstsVector():
 
 
         if len(scores_per_file) > 0:
-            t = Test(name="Higher risk from a short gap between ai detection events. Test bounds from %s to %s"%dateRange, vector=self.rv, risk=sum(scores_per_file))
+            t = Test(name="Higher score from a short gap between ai detection events. Test bounds from %s to %s"%dateRange, vector=self.rv, score=sum(scores_per_file))
             self.session.add(t)
             
             self.session.commit()

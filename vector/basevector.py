@@ -4,6 +4,10 @@ from sqlalchemy.orm.session import Session
 import json
 
 class BaseVector():
+    """
+    this class is not used. maybe someday it will contain base values for all vectors, but not today.
+    I don't trust that sqlalchemy's declarative orm features will work with parent classes like this.
+    """
 
     rv: RiskVector
 
