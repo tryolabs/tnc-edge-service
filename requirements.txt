@@ -3,7 +3,9 @@ flask_admin
 sqlalchemy<2.0
 click
 nmeasim
+geographiclib
 pynmeagps
 psycopg2
 Flask-SQLAlchemy
 alembic
+requests

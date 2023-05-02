@@ -27,6 +27,6 @@ fi
 
 if ! grep -q -E "^SECRET_KEY=" "$PROD_CONF_FILE" ; then
   echo "creating secret_key in prod config"
-  echo "SECRET_KEY='$(base64 /dev/urandom | tr -d '+/Il10O' | fold -w 32 | head -n 1)'" >> "$PROD_CONF_FILE"
+  echo "SECRET_KEY='$(dd if=/dev/urandom count=40 | base64 | tr -d '+/Il10O' | fold -w 32 | head -n 1)'" >> "$PROD_CONF_FILE"
 fi
 

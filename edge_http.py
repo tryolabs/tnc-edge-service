@@ -4,10 +4,10 @@ from flask import Flask, g
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import scoped_session, sessionmaker
 import os
 
+from db import db
 
 app = Flask(__name__)
 
@@ -23,7 +23,6 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql+psycopg2://%s@/%s"%(app.conf
 # engine = create_engine("postgresql+psycopg2://%s@/%s"%(app.config['DBUSER'], app.config['DBNAME']), echo=True)
 
 # SessionMaker = scoped_session(sessionmaker(bind=engine))
-db = SQLAlchemy()
 db.init_app(app)
 
 from model import *
