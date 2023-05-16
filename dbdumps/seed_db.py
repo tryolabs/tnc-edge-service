@@ -51,12 +51,19 @@ def clear_db(session: Session):
 @click.option('--cleardb', default=False, is_flag=True)
 @click.option('--dbname', default="edge")
 @click.option('--dbuser', default="edge")
-def cli(cleardb, dbname, dbuser):
+@click.option('--force', default=False, is_flag=True)
+def cli(cleardb, dbname, dbuser, force):
+
+    if not force :
+        import sys
+        print("This script is deprecated! run `venv/bin/alembic upgrade head` instead.")
+        print("if you really want to run this script, rerun with --force")
+        sys.exit(1)
     
     # engine = create_engine("sqlite:///db.db", echo=True)
     engine = create_engine("postgresql+psycopg2://%s@/%s"%(dbuser, dbname), echo=True)
     SessionMaker = sessionmaker(engine)
-
+    session = SessionMaker()
     if cleardb:
         clear_db(session)
         Base.metadata.drop_all(engine)

@@ -15,6 +15,8 @@ if ! which iftop ; then sudo apt -y install iftop ; fi
 if ! which traceroute ; then sudo apt -y install traceroute ; fi
 if ! which jq ; then sudo apt -y install jq ; fi
 if ! which curl ; then sudo apt -y install curl ; fi
+if ! dpkg -s python3-venv | grep "Status: install ok installed" ; then sudo apt -y install python3-venv ; fi
+if ! dpkg -s python3-dev | grep "Status: install ok installed" ; then sudo apt -y install python3-dev ; fi
 
 WRITE_RTC_UDEV_RULE=0
 
@@ -61,7 +63,7 @@ if ! grep -e '^< PM_CONFIG DEFAULT='"$NEW_PM_ID"' >' /etc/nvpmodel.conf  ; then
 fi
 
 if ! ( sudo nvpmodel -q | grep -e '^'"$NEW_PM_ID"'$' )  ; then 
-  echo "setting new power level" 
+  echo "setting new power level"  
   sudo nvpmodel -m "$NEW_PM_ID"
 fi
 

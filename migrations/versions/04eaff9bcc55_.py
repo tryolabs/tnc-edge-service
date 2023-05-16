@@ -1,4 +1,4 @@
-"""empty message
+"""first
 
 Revision ID: 04eaff9bcc55
 Revises: 
@@ -17,10 +17,8 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.alter_column("tests", "risk", new_column_name="score")
     pass
 
 
 def downgrade() -> None:
-    op.alter_column("tests", "score", new_column_name="risk")
     pass

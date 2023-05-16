@@ -5,6 +5,7 @@ click
 nmeasim
 geographiclib
 pynmeagps
+wheel
 psycopg2
 Flask-SQLAlchemy
 alembic
