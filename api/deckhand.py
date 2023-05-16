@@ -18,15 +18,12 @@ blueprint = Blueprint('DeckhandApi', __name__)
 
 @blueprint.route('/', methods=['PUT', 'POST'])
 def event():
-    s = db._make_scoped_session
     d = request.get_json()
 
     event = DeckhandEvent()
-    # event.id=1
     event.jsonblob = json.dumps(d)
     db.session.add(event)
     db.session.commit()
-    # r = db.session.query()
 
     # for i in r:
     #     print(i);

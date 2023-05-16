@@ -16,7 +16,7 @@ jobs:
     # set up a matrix, which can force the job to run on all runners
     strategy:
       matrix:
-        targets: [edge1]
+        targets: [edge1, edge2]
         
     # The type of runner that the job will run on
     runs-on: ${{ matrix.targets }}
@@ -25,7 +25,7 @@ jobs:
     steps:
     # Runs a single command using the runners shell
     - name: Send greeting
-      run: echo "Hello ${{ github.event.inputs.name }}"
+      run: echo "Hello. Full event - ${{ github.event }}"
     - uses: actions/checkout@v3
     - run: rsync -avz . /home/edge/tnc-edge-service
     - run: bash /home/edge/tnc-edge-service/scripts/app-install.sh

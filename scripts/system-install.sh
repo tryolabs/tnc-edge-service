@@ -1,6 +1,20 @@
 
+scriptdir="$(dirname -- "$( readlink -f -- "$0")")"
+
+USERHOME="/home/edge"
+
+cd "$USERHOME"
+
+if [ "$UID" < 1000 ] ; then
+  echo "This script should be run as a non-root user with 'sudo' access"
+  exit 1
+fi
+
+
 if ! which iftop ; then sudo apt -y install iftop ; fi
 if ! which traceroute ; then sudo apt -y install traceroute ; fi
+if ! which jq ; then sudo apt -y install jq ; fi
+if ! which curl ; then sudo apt -y install curl ; fi
 
 WRITE_RTC_UDEV_RULE=0
 
@@ -34,6 +48,39 @@ EOF
 fi
 
 
+NEW_PM_ID="$(sed -n 's/^< POWER_MODEL ID=\([0-9]*\) NAME=MODE_15W_6CORE >/\1/p' /etc/nvpmodel.conf)"
+
+if ! ( echo "$NEW_PM_ID" | grep -e '^[0-9][0-9]*$' ) ; then
+  echo "could not get nv power model from /etc/nvpmodel.conf"
+  exit 1
+fi
+
+if ! grep -e '^< PM_CONFIG DEFAULT='"$NEW_PM_ID"' >' /etc/nvpmodel.conf  ; then 
+  echo "setting new default power level" 
+  sudo sed -i"" 's/^< PM_CONFIG DEFAULT=.* >/< PM_CONFIG DEFAULT='"$NEW_PM_ID"' >/' /etc/nvpmodel.conf
+fi
+
+if ! ( sudo nvpmodel -q | grep -e '^'"$NEW_PM_ID"'$' )  ; then 
+  echo "setting new power level" 
+  sudo nvpmodel -m "$NEW_PM_ID"
+fi
+
+
+if ! (hostname | grep -e '^edge[0-9][0-9]*$' ) ; then
+  echo "set the hostname to 'edgeX'!"
+  echo "be sure to use the command 'sudo hostnamectl set-hostname <edgeX>'"
+  exit 1
+fi
+
+if ! grep -e "^127\.[0-9\.\t ]*$(hostname)" /etc/hosts ; then
+  if ! grep -e "^127\.[0-9\.\t ]*ubuntu$" /etc/hosts ; then
+    echo "aah I assumed the old hostname was 'ubuntu', but it's not in /etc/hosts! exiting!"
+    exit 1
+  fi
+  sudo sed -i"" 's/^127\.\([0-9\.\t ]*\)ubuntu.*$/127.\1'"$(hostname)"'/' /etc/hosts
+fi
+
+
 NVFANCONTROL_FILE=/etc/nvfancontrol.conf
 # NVFANCONTROL_FILE=arst.txt
 
@@ -49,11 +96,11 @@ EOF
 fi
 
 
-if ! [ -d "$HOME/actions-runner" ] ||
-   ! [ -e "$HOME/actions-runner/.runner" ] ||
-   ! [ -e "$HOME/actions-runner/.credentials" ]  ; then
+if ! [ -d "$USERHOME/actions-runner" ] ||
+   ! [ -e "$USERHOME/actions-runner/.runner" ] ||
+   ! [ -e "$USERHOME/actions-runner/.credentials" ]  ; then
   echo "Need to install github.com Self-hosted Actions Runner"
-  echo "follow instructions at https://github.com/productOps/dp-tnc-edge/settings/actions/runners/new"
+  echo "follow instructions at https://github.com/productOps/tnc-edge-service/settings/actions/runners/new"
   echo "if permission is denied, contact github repo admins"
   echo "use these configs:"
   echo "  Enter the name of the runner group ... "
@@ -67,7 +114,6 @@ if ! [ -d "$HOME/actions-runner" ] ||
   echo ""
   echo "rerun this install script when complete"
 
-  exit 1
 fi
 
 if ! [ -e "/etc/systemd/system/github-actions-runner.service" ] ; then
@@ -165,4 +211,18 @@ if ! ( echo "\dt;" | psql edge ) ; then
 CREATE DATABASE edge;
 GRANT ALL ON DATABASE edge TO edge;
 EOF
+fi
+
+if ! [ -e /etc/docker/daemon.json ] || ! jq -e '.runtimes.nvidia' /etc/docker/daemon.json ; then
+  sudo nvidia-ctk runtime configure
+  sudo systemctl restart docker.service
+fi
+
+if ! python2 -c 'import pip' ; then
+  curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -L --output get-pip.py
+  python2 get-pip.py
+fi
+
+if ! python2 -c 'import virtualenv' ; then
+  python2 -m pip install virtualenv
 fi
