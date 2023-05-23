@@ -1,5 +1,5 @@
 
-## WIP - not working
+## WIP - probably working?
 
 scriptdir="$(dirname -- "$( readlink -f -- "$0")")"
 
@@ -15,7 +15,7 @@ function usage {
   echo "    vpn-install.sh <OpenVPN_Config_File.ovpn>"
 }
 
-if [ "x$1" == "x" ] || [ -e  "$1" ] ; then
+if [ "x$1" == "x" ] || ! [ -e  "$1" ] ; then
   echo "no OpenVPN config file"
   echo ""
   usage
@@ -28,6 +28,7 @@ if ! which openvpn ; then
   sudo apt -y install openvpn 
 fi
 
-cp "$1" /etc/openvpn/client/tnc-edge.conf
-
+sudo cp "$1" /etc/openvpn/client/tnc-edge.conf
+sudo systemctl enable openvpn-client@tnc-edge
+sudo systemctl restart openvpn-client@tnc-edge
 

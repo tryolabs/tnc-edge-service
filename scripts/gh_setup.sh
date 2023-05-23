@@ -17,5 +17,5 @@
 #Configure
 cd ./actions-runner-linux-arm64-2.304.0
 # Create the runner and start the configuration experience
-  ./config.sh --url https://github.com/productOps/dp-tnc-edge --token XXXXXXXX
+  ./config.sh --url https://github.com/productOps/tnc-edge-service --token XXXXXXXX
 

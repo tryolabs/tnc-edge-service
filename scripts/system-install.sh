@@ -5,7 +5,7 @@ USERHOME="/home/edge"
 
 cd "$USERHOME"
 
-if [ "$UID" < 1000 ] ; then
+if [ "$UID" -lt 1000 ] ; then
   echo "This script should be run as a non-root user with 'sudo' access"
   exit 1
 fi
@@ -51,10 +51,12 @@ fi
 
 
 NEW_PM_ID="$(sed -n 's/^< POWER_MODEL ID=\([0-9]*\) NAME=MODE_15W_6CORE >/\1/p' /etc/nvpmodel.conf)"
-
 if ! ( echo "$NEW_PM_ID" | grep -e '^[0-9][0-9]*$' ) ; then
-  echo "could not get nv power model from /etc/nvpmodel.conf"
-  exit 1
+  NEW_PM_ID="$(sed -n 's/^< POWER_MODEL ID=\([0-9]*\) NAME=15W >/\1/p' /etc/nvpmodel.conf)"
+  if ! ( echo "$NEW_PM_ID" | grep -e '^[0-9][0-9]*$' ) ; then
+    echo "could not get nv power model from /etc/nvpmodel.conf"
+    exit 1
+  fi
 fi
 
 if ! grep -e '^< PM_CONFIG DEFAULT='"$NEW_PM_ID"' >' /etc/nvpmodel.conf  ; then 
@@ -74,8 +76,8 @@ if ! (hostname | grep -e '^edge[0-9][0-9]*$' ) ; then
   exit 1
 fi
 
-if ! grep -e "^127\.[0-9\.\t ]*$(hostname)" /etc/hosts ; then
-  if ! grep -e "^127\.[0-9\.\t ]*ubuntu$" /etc/hosts ; then
+if ! grep -E "^127\.[0-9\.]*\s*$(hostname)" /etc/hosts ; then
+  if ! grep -E "^127\.[0-9\.]*\s*ubuntu$" /etc/hosts ; then
     echo "aah I assumed the old hostname was 'ubuntu', but it's not in /etc/hosts! exiting!"
     exit 1
   fi
