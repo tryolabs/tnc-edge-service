@@ -7,7 +7,8 @@
 # don't commit the secret token to this file!
 
  # Create a folder
-  mkdir actions-runner && cd actions-runner
+  mkdir actions-runner
+  cd actions-runner
 # Download the latest runner package
   curl -o actions-runner-linux-arm64-2.304.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.304.0/actions-runner-linux-arm64-2.304.0.tar.gz
 # Optional: Validate the hash
@@ -17,5 +18,5 @@
 #Configure
 cd ./actions-runner-linux-arm64-2.304.0
 # Create the runner and start the configuration experience
-  ./config.sh --url https://github.com/productOps/tnc-edge-service --token XXXXXXXX
+  ./config.sh --url https://github.com/productOps/tnc-edge-service --token XXXXXXXX 
 
