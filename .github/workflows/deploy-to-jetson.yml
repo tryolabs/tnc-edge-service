@@ -16,7 +16,7 @@ jobs:
     # set up a matrix, which can force the job to run on all runners
     strategy:
       matrix:
-        targets: [edge1, edge2, edge4, edge5]
+        targets: [edge1, edge2, edge3, edge4, edge5, edge6]
         
     # The type of runner that the job will run on
     runs-on: ${{ matrix.targets }}

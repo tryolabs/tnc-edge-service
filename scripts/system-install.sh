@@ -118,6 +118,7 @@ if ! [ -d "$USERHOME/actions-runner" ] ||
   echo ""
   echo "rerun this install script when complete"
 
+  exit 1
 fi
 
 if ! [ -e "/etc/systemd/system/github-actions-runner.service" ] ; then
