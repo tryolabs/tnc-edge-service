@@ -81,4 +81,5 @@ def downgrade() -> None:
     op.drop_table('fishaidata')
     op.drop_table('deckhandevents')
     op.drop_table('boatschedules')
+    op.execute('drop type t;')
     # ### end Alembic commands ###

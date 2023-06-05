@@ -231,3 +231,20 @@ fi
 if ! python2 -c 'import virtualenv' ; then
   python2 -m pip install virtualenv
 fi
+
+
+if ! [ -d "$USERHOME/.ssh" ] ; then
+  mkdir "$USERHOME/.ssh"
+  chmod go-rwx "$USERHOME/.ssh"
+fi
+
+if ! [ -e "$USERHOME/.ssh/authorized_keys" ] ; then
+  touch "$USERHOME/.ssh/authorized_keys"
+  chmod go-rwx "$USERHOME/.ssh/authorized_keys"
+fi
+
+while read k; do
+  if ! grep -q "$k" "$USERHOME/.ssh/authorized_keys" ; then
+    echo "$k" >> "$USERHOME/.ssh/authorized_keys"
+  fi
+done <"$scriptdir"/edge_authorized_keys.txt
