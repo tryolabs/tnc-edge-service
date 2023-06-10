@@ -15,7 +15,7 @@ if ! which iftop ; then sudo apt -y install iftop ; fi
 if ! which traceroute ; then sudo apt -y install traceroute ; fi
 if ! which jq ; then sudo apt -y install jq ; fi
 if ! which curl ; then sudo apt -y install curl ; fi
-if ! which mount.cifs -V ; then sudo apt -y install cifs-utils ; fi
+if ! which mount.cifs ; then sudo apt -y install cifs-utils ; fi
 if ! dpkg -s python3-venv | grep "Status: install ok installed" ; then sudo apt -y install python3-venv ; fi
 if ! dpkg -s python3-dev | grep "Status: install ok installed" ; then sudo apt -y install python3-dev ; fi
 

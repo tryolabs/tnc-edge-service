@@ -34,9 +34,9 @@ class FishAiEventsComeInFourHourBurstsVector():
 
 
 
-    def execute(self, dateRange):
+    def execute(self, datetime_from, datetime_to):
 
-        fishAiDatas = self.session.query(FishAiData).filter(FishAiData.datetime > dateRange[0]).filter(FishAiData.datetime < dateRange[1])
+        fishAiDatas = self.session.query(FishAiData).filter(FishAiData.datetime > datetime_from).filter(FishAiData.datetime < datetime_to)
 
         scores_per_file = []
 

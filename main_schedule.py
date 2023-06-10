@@ -15,25 +15,37 @@ from datetime import datetime, timedelta, timezone
 
 import click
 
+import schedule
+import re
+import time
 
+
+def parse_and_schedule(vector, execute_func, *args):
+
+    if m := re.match('every (\d+) minutes', vector.schedule_string ):
+        
+        d = timedelta(minutes=int(m.group(1)))
+        schedule.every(int(m.group(1))).minutes.do(execute_func, d, *args)
+
+    elif m := re.match('every (\d+) hours', vector.schedule_string ):
+        
+        d = timedelta(hours=int(m.group(1)))
+        schedule.every(int(m.group(1))).hours.do(execute_func, d, *args)
+        
+    
 
 @click.command()
-@click.option("--interval_hours", default=0)
-@click.option("--interval_minutes", default=0)
 @click.option('--dbname', default="edge")
 @click.option('--dbuser', default="edge")
-def main(interval_hours, interval_minutes, dbname, dbuser):
+def main(dbname, dbuser):
     # engine = create_engine("sqlite:///db.db", echo=True)
     engine = create_engine("postgresql+psycopg2://%s@/%s"%(dbuser, dbname), echo=True)
     SessionMaker = sessionmaker(engine)
 
     ModelBase.metadata.create_all(engine)
 
-    datetime_to = datetime.now(tz=timezone.utc)
-    d = timedelta(hours=interval_hours, minutes=interval_minutes)
-    if d == timedelta(0):
-        d = timedelta(hours=1)
-    datetime_from = datetime_to-d
+    
+    
 
     with SessionMaker() as session:
         print("start of cron")
@@ -50,35 +62,49 @@ def main(interval_hours, interval_minutes, dbname, dbuser):
         for v in q.all():
             print("start of vector", v)
             all_vectors.append(v)
+            
+
             if v.name == GpsVector.__name__:
                 g = GpsVector(session, v)
                 gps_vectors.append(g)
-                res = g.execute(datetime_from, datetime_to, None)
-                print("end of vector", res)
+                parse_and_schedule(v, g.execute, None)
+                # print("end of vector", res)
+
             if v.name == FishAiEventsComeInFourHourBurstsVector.__name__:
                 f = FishAiEventsComeInFourHourBurstsVector(session, v)
                 fishai_vectors.append(f)
-                res = f.execute(datetime_from, datetime_to)
-                print("end of vector", res)
+                # res = f.execute(daterange)
+                # print("end of vector", res)
 
 
             if v.name == InternetVector.__name__:
                 f = InternetVector(session, v)
                 inet_vectors.append(f)
-                res = f.execute(datetime_from, datetime_to)
-                print("end of vector", res)
+                parse_and_schedule(v, f.execute)
+                # res = f.execute(daterange)
+                # print("end of vector", res)
 
             if v.name == EquipmentOutageAggVector.__name__:
                 eov = EquipmentOutageAggVector(session, v)
                 eov_vectors.append(eov)
-                res = eov.execute(datetime_from, datetime_to)
-                print("end of vector", res)
-
+                # res = eov.execute(daterange)
+                # print("end of vector", res)
+            
 
 
         for v in all_vectors:
             pass
 
+        while 1:
+            n = schedule.idle_seconds()
+            if n is None:
+                # no more jobs
+                break
+            elif n > 0:
+                # sleep exactly the right amount of time
+                print("sleeping for:", n)
+                time.sleep(n)
+            schedule.run_pending()
 
 if __name__ == '__main__':
     main()

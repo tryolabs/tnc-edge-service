@@ -10,6 +10,8 @@ import subprocess
 import re
 import codecs
 
+from datetime import datetime, timezone
+
 py38encodings = ['ascii', 'utf_32', 'utf_32_be', 'utf_32_le', 'utf_16', 'utf_16_be', 'utf_16_le', 'utf_7',
  'utf_8', 'utf_8_sig','big5', 'big5hkscs', 'cp037', 'cp273', 'cp424', 'cp437', 'cp500', 'cp720',
  'cp737', 'cp775', 'cp850', 'cp852', 'cp855', 'cp856', 'cp857', 'cp858', 'cp860', 'cp861', 'cp862',
@@ -58,8 +60,26 @@ class InternetVector():
         print(self.target_ips)
 
 
-    def execute(self, dateRange):
-        result = Test(name="internet test from %s to %s"%dateRange, vector=self.rv)
+    
+    def execute(self, expected_timedelta):
+        datetime_to = datetime.now(tz=timezone.utc)
+        datetime_from = datetime_to - expected_timedelta
+        last = self.session.query(Test)\
+            .where(Test.vector_id == self.rv.id, Test.datetime_to < datetime_to)\
+            .order_by(Test.datetime_to.desc())\
+            .limit(1).all()
+        
+        if len(list(last)) :
+            last_datetime = last[0].datetime_to
+            if datetime_to - last_datetime < expected_timedelta * 2:
+                datetime_from = last_datetime
+                print("found previous run, referencing datetime_to")
+            else:
+                print("found previous run, datetime_to is too old")
+        else:
+            print("no previous run found, using expected_timedelta")
+        
+        result = Test(name="internet test from %s to %s"%(datetime_from,datetime_to), vector=self.rv)
         self.session.add(result)
         self.session.commit()
         # print(result)

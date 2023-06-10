@@ -7,6 +7,7 @@ from model.gpsdata import GpsData
 
 from model.test import T
 import json
+from datetime import datetime, timezone
 
 
 class GpsVector():
@@ -27,14 +28,32 @@ class GpsVector():
         print(self.boundarysegments)
 
 
-    def execute(self, dateRange, gpsDataSelect):
-        result = Test(name="gps test from %s to %s"%dateRange, vector=self.rv)
+    def execute(self, expected_timedelta, gpsDataSelect):
+        datetime_to = datetime.now(tz=timezone.utc)
+        datetime_from = datetime_to - expected_timedelta
+        last = self.session.query(Test)\
+            .where(Test.vector_id == self.rv.id, Test.datetime_to < datetime_to)\
+            .order_by(Test.datetime_to.desc())\
+            .limit(1).all()
+        
+        if len(list(last)) :
+            last_datetime = last[0].datetime_to
+            if datetime_to - last_datetime < expected_timedelta * 2:
+                datetime_from = last_datetime
+                print("found previous run, referencing datetime_to")
+            else:
+                print("found previous run, datetime_to is too old")
+        else:
+            print("no previous run found, using expected_timedelta")
+
+        result = Test(name="gps test from %s to %s"%(datetime_from,datetime_to), 
+                      vector=self.rv, datetime_from=datetime_from, datetime_to=datetime_to)
         self.session.add(result)
         self.session.commit()
         # print(result)
         
 
-        gpsDatas = self.session.query(GpsData).filter(GpsData.datetime > dateRange[0]).filter(GpsData.datetime < dateRange[1])
+        gpsDatas = self.session.query(GpsData).filter(GpsData.datetime > datetime_from).filter(GpsData.datetime < datetime_to)
 
         gpsPointsOutOfBounds = 0
         for gpsData in gpsDatas:

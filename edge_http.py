@@ -49,6 +49,7 @@ admin.add_view(RiskVectorModelView(db.session))
 admin.add_view(TestModelView(db.session))
 admin.add_view(ModelView(GpsData, db.session))
 admin.add_view(ModelView(FishAiData, db.session))
+admin.add_view(ModelView(OndeckData, db.session))
 admin.add_view(InternetDataView(db.session))
 admin.add_view(ModelView(DeckhandEvent, db.session))
 

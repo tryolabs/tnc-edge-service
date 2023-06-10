@@ -10,6 +10,7 @@ class RiskVector(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
+    schedule_string = Column(String)
     configblob = Column(String)
     tests = relationship("Test", back_populates="vector")
 
@@ -19,6 +20,8 @@ class RiskVector(Base):
             [n + '='+ str(self.__getattribute__(n)) for n in [
                 'id',
                 'name',
+                'schedule_string',
+                'configblob'
             ]]) + ')'
 
 

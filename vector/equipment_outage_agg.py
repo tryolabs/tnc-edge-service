@@ -24,15 +24,15 @@ class EquipmentOutageAggVector():
         print(self.rv)
 
 
-    def execute(self, dateRange):
-        result = Test(name="equipment outage aggregator from %s to %s"%dateRange, vector=self.rv)
+    def execute(self, datetime_from, datetime_to):
+        result = Test(name="equipment outage aggregator from %s to %s"%(datetime_from, datetime_to), vector=self.rv)
         self.session.add(result)
         self.session.commit()
         # print(result)
         
         tests = self.session.query(Test).filter(
-            Test.datetime >= dateRange[0],
-            Test.datetime <= dateRange[1],
+            Test.datetime >= datetime_from,
+            Test.datetime <= datetime_to,
             Test.vector_id.in_(self.observed_riskvector_ids),
             ).order_by(Test.datetime)
         

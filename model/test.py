@@ -24,6 +24,8 @@ class Test(Base):
     vector = relationship("RiskVector", back_populates="tests")
     score = Column(Float)
     detail = Column(String)
+    datetime_from = Column(DateTime)
+    datetime_to = Column(DateTime)
     datetime = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
     # fk = ForeignKeyConstraint(['id'], [RiskVector.id])
 
@@ -46,7 +48,7 @@ class TestModelView(ModelView):
     can_delete = True
     column_display_pk = True
     column_hide_backrefs = False
-    column_list = ["id","name","type","vector", "score", "detail", "datetime"]
+    column_list = ["id","name","type","vector", "score", "detail", "datetime_from", "datetime_to", "datetime"]
     column_searchable_list = ["name"]
     column_filters = ["vector_id", "datetime"]
     # column_select_related_list=['vector']
