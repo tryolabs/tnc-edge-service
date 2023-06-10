@@ -38,3 +38,31 @@ while read k; do
 done <"$scriptdir/ondeck_authorized_keys.txt"
 
 EOF
+
+gapp_creds_config_line=$(sudo grep -E '^export GOOGLE_APPLICATION_CREDENTIALS=' "$USERHOME/.bashrc")
+
+if [ $? -eq 0 ] && [ "x$gapp_creds_config_line" != "x" ] ; then
+  # eval to make this value available in this script
+  eval $gapp_creds_config_line
+else
+
+  # set it up in .bashrc
+  sudo /bin/bash <<EOF
+echo export GOOGLE_APPLICATION_CREDENTIALS="$USERHOME/google_application_credentials.json" >> "$USERHOME/.bashrc"
+EOF
+
+  # and make this value available in this script
+  GOOGLE_APPLICATION_CREDENTIALS="$USERHOME/google_application_credentials.json"
+fi
+
+if ! [ -e "$GOOGLE_APPLICATION_CREDENTIALS" ] ; then
+  if ! [ -e "$scriptdir/secret_google_application_credentials.json" ]  ; then
+    echo "cannot find and cannot install google app creds json file!"
+    echo "make the creds available in this scripts dir and rerun this script"
+    exit 1
+  fi
+  sudo cp "$scriptdir/secret_google_application_credentials.json" "$GOOGLE_APPLICATION_CREDENTIALS"
+  sudo chown ondeck:ondeck "$GOOGLE_APPLICATION_CREDENTIALS"
+fi
+
+

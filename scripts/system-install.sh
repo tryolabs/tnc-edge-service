@@ -15,6 +15,7 @@ if ! which iftop ; then sudo apt -y install iftop ; fi
 if ! which traceroute ; then sudo apt -y install traceroute ; fi
 if ! which jq ; then sudo apt -y install jq ; fi
 if ! which curl ; then sudo apt -y install curl ; fi
+if ! which mount.cifs -V ; then sudo apt -y install cifs-utils ; fi
 if ! dpkg -s python3-venv | grep "Status: install ok installed" ; then sudo apt -y install python3-venv ; fi
 if ! dpkg -s python3-dev | grep "Status: install ok installed" ; then sudo apt -y install python3-dev ; fi
 
@@ -248,3 +249,38 @@ while read k; do
     echo "$k" >> "$USERHOME/.ssh/authorized_keys"
   fi
 done <"$scriptdir"/edge_authorized_keys.txt
+
+
+
+# turn off Ubuntu screen off events
+gsettings set org.gnome.desktop.session idle-delay 0
+gsettings set org.gnome.desktop.screensaver lock-enabled false
+gsettings set org.gnome.desktop.screensaver ubuntu-lock-on-suspend false
+
+
+# turn off Ubuntu auto apt updates
+sudo sed -i"" -e 's/^APT::Periodic::Update-Package-Lists "\?1"\?;/APT::Periodic::Update-Package-Lists "0";/' /etc/apt/apt.conf.d/10periodic
+sudo sed -i"" -e 's/^APT::Periodic::Download-Upgradeable-Packages "\?1"\?;/APT::Periodic::Download-Upgradeable-Packages "0";/' /etc/apt/apt.conf.d/10periodic
+
+
+if ! which docker-credential-gcr ; then 
+  # rm ./docker-credential-gcr ./docker-credential-gcr.tar.gz
+  # curl -L 'https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v2.1.8/docker-credential-gcr_linux_arm64-2.1.8.tar.gz' -o docker-credential-gcr.tar.gz
+  # tar xzf docker-credential-gcr.tar.gz
+  # sudo mv ./docker-credential-gcr /usr/local/bin
+
+  # actually, I'm going to copy the script from google's docs:
+
+  VERSION=2.1.8
+  OS=linux  # or "darwin" for OSX, "windows" for Windows.
+  ARCH=arm64  # or "386" for 32-bit OSs
+
+  curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v${VERSION}/docker-credential-gcr_${OS}_${ARCH}-${VERSION}.tar.gz" \
+  | tar xz docker-credential-gcr \
+  && chmod +x docker-credential-gcr \
+  && sudo mv docker-credential-gcr /usr/local/bin/
+fi
+
+
+gsettings set org.gnome.Vino require-encryption false
+
