@@ -11,4 +11,4 @@ Flask-SQLAlchemy
 alembic
 requests
 schedule
-
+boto3

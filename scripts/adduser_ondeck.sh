@@ -61,7 +61,7 @@ if ! [ -e "$GOOGLE_APPLICATION_CREDENTIALS" ] ; then
     echo "make the creds available in this scripts dir and rerun this script"
     exit 1
   fi
-  sudo cp "$scriptdir/secret_google_application_credentials.json" "$GOOGLE_APPLICATION_CREDENTIALS"
+  sudo cp "$scriptdir/secret_ondeck_gcr_token.json" "$GOOGLE_APPLICATION_CREDENTIALS"
   sudo chown ondeck:ondeck "$GOOGLE_APPLICATION_CREDENTIALS"
 fi
 

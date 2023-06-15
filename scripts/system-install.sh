@@ -281,6 +281,35 @@ if ! which docker-credential-gcr ; then
   && sudo mv docker-credential-gcr /usr/local/bin/
 fi
 
+if ! [ -e "$USERHOME/.config/gcloud/docker_credential_gcr_config.json" ] ; then
+  docker-credential-gcr config --token-source="env, store"
+fi
+
+if ! grep -E '^export GOOGLE_APPLICATION_CREDENTIALS=' "$USERHOME/.bashrc" ; then
+  echo "export GOOGLE_APPLICATION_CREDENTIALS=$USERHOME/tnc-edge-service/scripts/secret_ondeck_gcr_token.json" >> "$USERHOME/.bashrc"
+fi
 
 gsettings set org.gnome.Vino require-encryption false
+
+
+if ! [ -d "$USERHOME/.aws" ] ; then
+  mkdir "$USERHOME/.aws"
+fi
+
+if ! [ -e "$USERHOME/.aws/credentials" ] ; then
+  if ! [ -e "$scriptdir/secret_aws_creds.txt" ] ; then
+    echo "aws secret keys file not found! please add the secret and rerun this script"
+    exit 1
+  fi
+
+  cp "$scriptdir/secret_aws_creds.txt" "$USERHOME/.aws/credentials"
+
+  chmod go-rwx "$USERHOME/.aws/credentials"
+fi
+
+
+if [ -e "$USERHOME/.gnupg/pubring.kbx" ] && [ "xedge:edge" != "x$(stat --format '%U:%G' "$USERHOME/.gnupg/pubring.kbx")" ] ; then
+  sudo chown edge:edge "$USERHOME/.gnupg/pubring.kbx"
+fi
+
 
