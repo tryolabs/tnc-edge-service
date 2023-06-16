@@ -349,19 +349,19 @@ fi
 
 if ! [ -e "/etc/systemd/system/netplan-autoswitcher.service" ] ; then
   
-  sudo cp ./netplan-autoswitcher.sh /root/netplan-autoswitcher.sh
+  sudo cp "$scriptdir/netplan-autoswitcher.sh" /root/netplan-autoswitcher.sh
 
   cat > ./netplan-autoswitcher.service << EOF
 [Unit]
 Description=netplan Autoswitcher
 After=network.target
+StartLimitIntervalSec=0
 
 [Service]
 WorkingDirectory=/root
 ExecStart=/bin/bash /root/netplan-autoswitcher.sh
 Restart=always
 RestartSec=120
-StartLimitIntervalSec=0
 
 [Install]
 WantedBy=default.target
