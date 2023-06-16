@@ -18,6 +18,7 @@ if ! which curl ; then sudo apt -y install curl ; fi
 if ! which mount.cifs ; then sudo apt -y install cifs-utils ; fi
 if ! dpkg -s python3-venv | grep "Status: install ok installed" ; then sudo apt -y install python3-venv ; fi
 if ! dpkg -s python3-dev | grep "Status: install ok installed" ; then sudo apt -y install python3-dev ; fi
+if ! which netplan ; then sudo apt -y install netplan.io ; fi
 
 WRITE_RTC_UDEV_RULE=0
 
@@ -286,7 +287,7 @@ if ! [ -e "$USERHOME/.config/gcloud/docker_credential_gcr_config.json" ] ; then
 fi
 
 if ! grep -E '^export GOOGLE_APPLICATION_CREDENTIALS=' "$USERHOME/.bashrc" ; then
-  echo "export GOOGLE_APPLICATION_CREDENTIALS=$USERHOME/tnc-edge-service/scripts/secret_ondeck_gcr_token.json" >> "$USERHOME/.bashrc"
+  echo "export GOOGLE_APPLICATION_CREDENTIALS=$scriptdir/secret_ondeck_gcr_token.json" >> "$USERHOME/.bashrc"
 fi
 
 gsettings set org.gnome.Vino require-encryption false
@@ -310,6 +311,68 @@ fi
 
 if [ -e "$USERHOME/.gnupg/pubring.kbx" ] && [ "xedge:edge" != "x$(stat --format '%U:%G' "$USERHOME/.gnupg/pubring.kbx")" ] ; then
   sudo chown edge:edge "$USERHOME/.gnupg/pubring.kbx"
+fi
+
+
+if ! [ -e /etc/netplan/01_eth0_dhcp.yaml* ] ; then
+  cat > ./01_eth0_dhcp.yaml <<EOF
+network:
+  version: 2
+  renderer: NetworkManager
+  ethernets:
+    eth0:
+      dhcp4: true
+EOF
+  sudo cp ./01_eth0_dhcp.yaml /etc/netplan/01_eth0_dhcp.yaml
+  rm ./01_eth0_dhcp.yaml
+fi
+
+if ! [ -e /etc/netplan/01_eth0_static.yaml* ] ; then
+  cat > ./01_eth0_static.yaml <<EOF
+network:
+  version: 2
+  renderer: NetworkManager
+  ethernets:
+    eth0:
+      addresses:
+        - 192.168.200.133/24
+      nameservers:
+      #  search: [mydomain, otherdomain]
+        addresses: [192.168.200.7]
+      routes: 
+        - to: default
+          via: 192.168.200.7
+EOF
+  sudo cp ./01_eth0_static.yaml /etc/netplan/01_eth0_static.yaml.off
+  rm ./01_eth0_static.yaml
+fi
+
+if ! [ -e "/etc/systemd/system/netplan-autoswitcher.service" ] ; then
+  
+  sudo cp ./netplan-autoswitcher.sh /root/netplan-autoswitcher.sh
+
+  cat > ./netplan-autoswitcher.service << EOF
+[Unit]
+Description=netplan Autoswitcher
+After=network.target
+
+[Service]
+WorkingDirectory=/root
+ExecStart=/bin/bash /root/netplan-autoswitcher.sh
+Restart=always
+RestartSec=120
+StartLimitIntervalSec=0
+
+[Install]
+WantedBy=default.target
+
+EOF
+    sudo cp ./netplan-autoswitcher.service /etc/systemd/system/netplan-autoswitcher.service
+    rm ./netplan-autoswitcher.service
+
+    sudo systemctl daemon-reload 
+    sudo systemctl enable "netplan-autoswitcher.service"
+    sudo systemctl start "netplan-autoswitcher.service"
 fi
 
 
