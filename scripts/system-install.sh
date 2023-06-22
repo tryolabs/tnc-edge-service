@@ -1,7 +1,9 @@
 
 scriptdir="$(dirname -- "$( readlink -f -- "$0")")"
 
-USERHOME="/home/edge"
+USERNAME="$(whoami)"
+USERHOME="/home/$USERNAME"
+
 
 cd "$USERHOME"
 
@@ -19,6 +21,7 @@ if ! which mount.cifs ; then sudo apt -y install cifs-utils ; fi
 if ! dpkg -s python3-venv | grep "Status: install ok installed" ; then sudo apt -y install python3-venv ; fi
 if ! dpkg -s python3-dev | grep "Status: install ok installed" ; then sudo apt -y install python3-dev ; fi
 if ! which netplan ; then sudo apt -y install netplan.io ; fi
+if ! which rsync ; then sudo apt -y install rsync ; fi
 
 WRITE_RTC_UDEV_RULE=0
 
@@ -72,7 +75,7 @@ if ! ( sudo nvpmodel -q | grep -e '^'"$NEW_PM_ID"'$' )  ; then
 fi
 
 
-if ! (hostname | grep -e '^edge[0-9][0-9]*$' ) ; then
+if ! (hostname | grep -e '^edge[a-z0-9][a-z0-9]*$' ) ; then
   echo "set the hostname to 'edgeX'!"
   echo "be sure to use the command 'sudo hostnamectl set-hostname <edgeX>'"
   exit 1
@@ -130,9 +133,9 @@ Description=Github Self-served Actions Runner Service
 After=network.target
 
 [Service]
-User=edge
-Group=edge
-WorkingDirectory=/home/edge/actions-runner
+User=$USERNAME
+Group=$USERNAME
+WorkingDirectory=$USERHOME/actions-runner
 ExecStart=/usr/bin/bash ./run.sh
 Restart=always
 
@@ -163,11 +166,11 @@ Description=TNC Edge Service
 After=network.target
 
 [Service]
-User=edge
-Group=edge
-WorkingDirectory=/home/edge/tnc-edge-service
-Environment=ENVIRONMENT=/home/edge/tnc-edge-service/config/prod.py
-ExecStart=/home/edge/tnc-edge-service/venv/bin/python3 edge_http.py
+User=$USERNAME
+Group=$USERNAME
+WorkingDirectory=$USERHOME/tnc-edge-service
+Environment=ENVIRONMENT=$USERHOME/tnc-edge-service/config/prod.py
+ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 edge_http.py
 Restart=always
 RestartSec=30
 
@@ -309,8 +312,8 @@ if ! [ -e "$USERHOME/.aws/credentials" ] ; then
 fi
 
 
-if [ -e "$USERHOME/.gnupg/pubring.kbx" ] && [ "xedge:edge" != "x$(stat --format '%U:%G' "$USERHOME/.gnupg/pubring.kbx")" ] ; then
-  sudo chown edge:edge "$USERHOME/.gnupg/pubring.kbx"
+if [ -e "$USERHOME/.gnupg/pubring.kbx" ] && [ "x$USERNAME:$USERNAME" != "x$(stat --format '%U:%G' "$USERHOME/.gnupg/pubring.kbx")" ] ; then
+  sudo chown $USERNAME:$USERNAME "$USERHOME/.gnupg/pubring.kbx"
 fi
 
 

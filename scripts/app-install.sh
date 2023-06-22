@@ -4,6 +4,13 @@ scriptdir="$(dirname -- "$( readlink -f -- "$0")")"
 
 cd "$scriptdir/.."
 
+USERNAME="$(whoami)"
+USERHOME="/home/$USERNAME"
+WORKINGDIR="$USERHOME/tnc-edge-service"
+
+cd "$WORKINGDIR"
+
+
 if ! [ -e ./venv/bin/activate ] ; then
   python3 -m venv venv
 fi
@@ -19,7 +26,7 @@ fi
 pip install -r requirements.txt
 
 
-PROD_CONF_FILE="/home/edge/tnc-edge-service/config/prod.py"
+PROD_CONF_FILE="$WORKINGDIR/config/prod.py"
 
 if ! [ -e "$PROD_CONF_FILE" ] ; then
   echo "DEBUG=False" >> "$PROD_CONF_FILE"
