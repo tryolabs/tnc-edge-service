@@ -27,6 +27,6 @@ jobs:
     - name: Send greeting
       run: echo "Hello. Full event - ${{ github.event }}"
     - uses: actions/checkout@v3
-    - run: rsync -avz . /home/edge/tnc-edge-service
-    - run: bash /home/edge/tnc-edge-service/scripts/app-install.sh
+    - run: rsync -avz . ~/tnc-edge-service
+    - run: bash ~/tnc-edge-service/scripts/app-install.sh
     
