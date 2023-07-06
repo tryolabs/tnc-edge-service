@@ -6,7 +6,7 @@ nmeasim
 geographiclib
 pynmeagps
 wheel
-psycopg2
+psycopg2-binary
 Flask-SQLAlchemy
 alembic
 requests

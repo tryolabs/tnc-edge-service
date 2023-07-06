@@ -212,14 +212,14 @@ fi
 
 if ! ( echo "select 1;" | psql postgres ) ; then
   sudo -u postgres psql <<EOF
-CREATE USER edge;
+CREATE USER $USERNAME;
 EOF
 fi
 
 if ! ( echo "\dt;" | psql edge ) ; then
   sudo -u postgres psql <<EOF
 CREATE DATABASE edge;
-GRANT ALL ON DATABASE edge TO edge;
+GRANT ALL ON DATABASE edge TO $USERNAME;
 EOF
 fi
 
@@ -277,8 +277,14 @@ if ! which docker-credential-gcr ; then
 
   VERSION=2.1.8
   OS=linux  # or "darwin" for OSX, "windows" for Windows.
-  ARCH=arm64  # or "386" for 32-bit OSs
-
+  if [ "x$(uname -p)" == 'xaarch64' ] ; then
+    ARCH="arm64"  # or "386" for 32-bit OSs
+  elif [ "x$(uname -p)" == 'xx86_64' ] ; then
+    ARCH="amd64"  # or "386" for 32-bit OSs
+  else
+    echo "unknown system architecture"
+    exit 1
+  fi
   curl -fsSL "https://github.com/GoogleCloudPlatform/docker-credential-gcr/releases/download/v${VERSION}/docker-credential-gcr_${OS}_${ARCH}-${VERSION}.tar.gz" \
   | tar xz docker-credential-gcr \
   && chmod +x docker-credential-gcr \
@@ -343,7 +349,7 @@ network:
       #  search: [mydomain, otherdomain]
         addresses: [192.168.200.7]
       routes: 
-        - to: default
+        - to: 0.0.0.0/0
           via: 192.168.200.7
 EOF
   sudo cp ./01_eth0_static.yaml /etc/netplan/01_eth0_static.yaml.off
@@ -377,5 +383,84 @@ EOF
     sudo systemctl enable "netplan-autoswitcher.service"
     sudo systemctl start "netplan-autoswitcher.service"
 fi
+
+
+
+
+
+if ! [ -e "/etc/systemd/system/thalos-video-autodecrypt.service" ] ; then
+
+  cat > ./thalos-video-autodecrypt.service << EOF
+[Unit]
+Description=Thalos Video Auto Decrypt
+After=network.target
+
+[Service]
+User=$USERNAME
+Group=$USERNAME
+WorkingDirectory=$USERHOME/tnc-edge-service
+Environment=ENVIRONMENT=$USERHOME/tnc-edge-service/config/prod.py
+ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 video_fetch.py --thalos_video_dir  --output_dir  --passphrase_file $USERHOME/tnc-edge-service/scripts/secret_gpg_passphrase.txt
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target
+
+EOF
+    sudo cp ./netplan-autoswitcher.service /etc/systemd/system/netplan-autoswitcher.service
+    rm ./netplan-autoswitcher.service
+
+    sudo systemctl daemon-reload 
+    sudo systemctl enable "netplan-autoswitcher.service"
+    sudo systemctl start "netplan-autoswitcher.service"
+fi
+
+if ! [ -d "/thalos" ] ; then
+  sudo mkdir /thalos
+  sudo chmod go+rwx /thalos
+fi
+
+if ! [ -e "/etc/systemd/system/thalos.mount" ] ; then
+  cat > ./thalos.mount << EOF
+[Unit]
+Description=Thalos fileshare mount
+Requires=network-online.target
+After=network-online.service
+
+[Mount]
+What=//192.168.200.5/stockage
+Where=/thalos
+Options=user=oceanlive,pass=OceanLive56,ro
+Type=cifs
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    sudo cp ./thalos.mount /etc/systemd/system/thalos.mount
+    rm ./thalos.mount
+
+    sudo systemctl daemon-reload 
+fi
+
+if ! [ -e "/etc/systemd/system/thalos.automount" ] ; then
+  cat > ./thalos.automount << EOF
+[Unit]
+Description=Thalos fileshare automounter
+
+[Automount]
+Where=/thalos
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    sudo cp ./thalos.automount /etc/systemd/system/thalos.automount
+    rm ./thalos.automount
+
+    sudo systemctl daemon-reload 
+    sudo systemctl enable thalos.automount
+    sudo systemctl start thalos.automount
+fi
+
 
 
