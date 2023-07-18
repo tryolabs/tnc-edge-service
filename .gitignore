@@ -4,4 +4,6 @@ __pycache__/
 db.db
 /config/prod.py
 /config/ericfultz.py
+/config/brancol.py
+/config/manudo.py
 secret*

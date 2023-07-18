@@ -39,6 +39,11 @@ done <"$scriptdir/ondeck_authorized_keys.txt"
 
 EOF
 
+# mktemp
+
+# ondeck ALL=NOPASSWD: /usr/bin/docker 
+
+
 gapp_creds_config_line=$(sudo grep -E '^export GOOGLE_APPLICATION_CREDENTIALS=' "$USERHOME/.bashrc")
 
 if [ $? -eq 0 ] && [ "x$gapp_creds_config_line" != "x" ] ; then
@@ -56,7 +61,7 @@ EOF
 fi
 
 if ! [ -e "$GOOGLE_APPLICATION_CREDENTIALS" ] ; then
-  if ! [ -e "$scriptdir/secret_google_application_credentials.json" ]  ; then
+  if ! [ -e "$scriptdir/secret_ondeck_gcr_token.json" ]  ; then
     echo "cannot find and cannot install google app creds json file!"
     echo "make the creds available in this scripts dir and rerun this script"
     exit 1

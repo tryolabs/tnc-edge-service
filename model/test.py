@@ -24,9 +24,9 @@ class Test(Base):
     vector = relationship("RiskVector", back_populates="tests")
     score = Column(Float)
     detail = Column(String)
-    datetime_from = Column(DateTime)
-    datetime_to = Column(DateTime)
-    datetime = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
+    datetime_from = Column(DateTime(timezone=True))
+    datetime_to = Column(DateTime(timezone=True))
+    datetime = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
     # fk = ForeignKeyConstraint(['id'], [RiskVector.id])
 
     def __str__(self) -> str:

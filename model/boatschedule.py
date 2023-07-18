@@ -7,7 +7,7 @@ class BoatSchedule(Base):
 
     id = Column(Integer, primary_key=True)
     sentence = Column(String)
-    datetime = Column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
+    datetime = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
 
     def __str__(self) -> str:
          return 'BoatSchedule(' + ', '.join(
@@ -15,3 +15,6 @@ class BoatSchedule(Base):
                 'id',
                 'sentence',
             ]]) + ')'
+
+
+

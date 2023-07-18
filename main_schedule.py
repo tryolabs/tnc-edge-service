@@ -1,10 +1,11 @@
 import json
+import io
 
 from flask import Flask
 from flask_admin import Admin
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 import os
 
 from model import Base as ModelBase, RiskVector, RiskVectorModelView, Test, TestModelView
@@ -20,7 +21,43 @@ import re
 import time
 
 
+from flask.config import Config as FlaskConfig
+flaskconfig = FlaskConfig(root_path='')
+
+flaskconfig.from_object('config.defaults')
+if 'ENVIRONMENT' in os.environ:
+    flaskconfig.from_envvar('ENVIRONMENT')
+
+
+import boto3
+
+s3 = boto3.resource('s3')
+bucket = s3.Bucket('51-gema-dev-dp-raw')
+
+def s3uploader(session: Session):
+
+    try:
+        now = datetime.now()
+
+        result = session.query(Test)\
+            .where(Test.datetime_from > now - timedelta(days=13), Test.vector_id == 2)\
+            .order_by(Test.datetime.desc())\
+            .limit(1).all()
+        rows = list(result)
+        if len(rows) > 0:
+            
+            body = io.BytesIO()
+            body.write((','.join([column.name for column in Test.__mapper__.columns]) + '\n').encode())
+            [body.write((','.join([str(getattr(row, column.name)) for column in Test.__mapper__.columns]) + '\n').encode()) for row in rows]
+            bucket.put_object(Key="tnc_edge/"+Test.__tablename__+"/"+str(int(now.timestamp()))+".csv", Body=body.getvalue())
+    except Exception as e:
+        print("Error: exception in s3 uploader", e)
+
+
 def parse_and_schedule(vector, execute_func, *args):
+
+    if not vector.schedule_string:
+        return
 
     if m := re.match('every (\d+) minutes', vector.schedule_string ):
         
@@ -32,13 +69,15 @@ def parse_and_schedule(vector, execute_func, *args):
         d = timedelta(hours=int(m.group(1)))
         schedule.every(int(m.group(1))).hours.do(execute_func, d, *args)
         
-    
+
 
 @click.command()
-@click.option('--dbname', default="edge")
-@click.option('--dbuser', default="edge")
+@click.option('--dbname', default=flaskconfig.get('DBNAME'))
+@click.option('--dbuser', default=flaskconfig.get('DBNAME'))
 def main(dbname, dbuser):
     # engine = create_engine("sqlite:///db.db", echo=True)
+    
+    # print(os.environ)
     engine = create_engine("postgresql+psycopg2://%s@/%s"%(dbuser, dbname), echo=True)
     SessionMaker = sessionmaker(engine)
 
@@ -94,6 +133,9 @@ def main(dbname, dbuser):
 
         for v in all_vectors:
             pass
+
+        schedule.every(1).hours.do(s3uploader)
+        s3uploader(session)
 
         while 1:
             n = schedule.idle_seconds()

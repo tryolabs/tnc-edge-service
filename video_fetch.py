@@ -12,33 +12,6 @@ import subprocess
 import time
 
 
-# py38encodings = ['ascii', 'utf_32', 'utf_32_be', 'utf_32_le', 'utf_16', 'utf_16_be', 'utf_16_le', 'utf_7',
-#  'utf_8', 'utf_8_sig','big5', 'big5hkscs', 'cp037', 'cp273', 'cp424', 'cp437', 'cp500', 'cp720',
-#  'cp737', 'cp775', 'cp850', 'cp852', 'cp855', 'cp856', 'cp857', 'cp858', 'cp860', 'cp861', 'cp862',
-#  'cp863', 'cp864', 'cp865', 'cp866', 'cp869', 'cp874', 'cp875', 'cp932', 'cp949', 'cp950', 'cp1006',
-#  'cp1026', 'cp1125', 'cp1140', 'cp1250', 'cp1251', 'cp1252', 'cp1253', 'cp1254', 'cp1255', 'cp1256',
-#  'cp1257', 'cp1258', 'euc_jp', 'euc_jis_2004', 'euc_jisx0213', 'euc_kr', 'gb2312', 'gbk', 'gb18030',
-#  'hz', 'iso2022_jp', 'iso2022_jp_1', 'iso2022_jp_2', 'iso2022_jp_2004', 'iso2022_jp_3', 'iso2022_jp_ext',
-#  'iso2022_kr', 'latin_1', 'iso8859_2', 'iso8859_3', 'iso8859_4', 'iso8859_5', 'iso8859_6', 'iso8859_7',
-#  'iso8859_8', 'iso8859_9', 'iso8859_10', 'iso8859_11','iso8859_13', 'iso8859_14', 'iso8859_15',
-#  'iso8859_16', 'johab', 'koi8_r', 'koi8_t', 'koi8_u', 'kz1048', 'mac_cyrillic', 'mac_greek',
-#  'mac_iceland', 'mac_latin2', 'mac_roman', 'mac_turkish', 'ptcp154', 'shift_jis', 'shift_jis_2004',
-#  'shift_jisx0213', ]
-
-# # print(subprocess.run("echo $SHELL", shell=True, capture_output=True))
-# loc_enc = subprocess.run("echo $LANG | awk '{split($0, a, \".\"); printf a[2]}'", shell=True, capture_output=True)
-# # print(loc_enc)
-# def findencoding():
-#     for e in py38encodings:
-#         try:
-#             found = codecs.lookup(loc_enc.stdout.decode(e))
-#             return found
-#         except:
-#             pass
-#     raise Exception('shell encoding not found')
-
-# shell_enc = findencoding().name
-
 from flask.config import Config as FlaskConfig
 flaskconfig = FlaskConfig(root_path='')
 
@@ -57,23 +30,27 @@ def depth_first_video_files(cameradir: Path):
                 vid_files = [x for x in hour_dir.iterdir() if x.is_file() and re.match('.*-(\d+)\.', x.name)]
                 vid_files.sort(key=lambda x: re.match('.*-(\d+)\.', x.name)[1], reverse=True)
                 for v in vid_files:
-                    yield v
+                    if v.name.endswith(".avi.done"):
+                        yield v
     except GeneratorExit:
         return
 
+def is_gpg(f: Path, passphrase_file: str):
+    cmd = "cat %s | gpg --pinentry-mode loopback --passphrase-fd 0 \
+                    --list-packets %s "%(
+                    passphrase_file, 
+                    str(f.absolute())
+                    )
+    p = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    return p.returncode == 0
 
-def job(cpool: SimpleConnectionPool, thalos_dir: Path, output_dir: Path, passphrase_file: str):
+def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, thalos_cam_name: str, output_dir: Path, passphrase_file: str):
 
-
-    # cmd = "mount | grep -q /tmp/thalos"%()
-    # p = subprocess.run(cmd, shell=True, capture_output=False)
-    # if p.returncode != 0:
-    #     print("video cifs not mounted")
-    #     return
-    
 
     
     for cameradir in filter(lambda x: x.is_dir(), thalos_dir.iterdir()):
+        if cameradir.name != thalos_cam_name:
+            continue
        
         last_two = []
 
@@ -126,15 +103,25 @@ def job(cpool: SimpleConnectionPool, thalos_dir: Path, output_dir: Path, passphr
 
                 # gpg decrypt the video
 
-                output_file = Path(output_dir, penultimate_vid.name)
+                output_filename = penultimate_vid.name
+                if output_filename.endswith('.done'):
+                    output_filename = output_filename[0:-5]
+                output_file = Path(output_dir, output_filename)
 
-                cmd = "cat %s | gpg --batch --yes \
-                    --pinentry-mode loopback --passphrase-fd 0 \
-                    --decrypt --output %s %s "%(
-                    passphrase_file, 
-                    str(output_file.absolute()), 
-                    str(penultimate_vid.absolute())
-                    )
+                cmd = None
+                if is_gpg(penultimate_vid, passphrase_file):
+                    cmd = "cat %s | gpg --batch --yes \
+                        --pinentry-mode loopback --passphrase-fd 0 \
+                        --decrypt --output %s %s "%(
+                        passphrase_file, 
+                        str(output_file.absolute()), 
+                        str(penultimate_vid.absolute())
+                        )
+                else:
+                    cmd = "cp %s %s"%(
+                        str(penultimate_vid.absolute()),
+                        str(output_file.absolute())
+                        )
                 p = subprocess.run(cmd, shell=True, capture_output=True, text=True)
                 if p.returncode == 0:
                     cur.execute("update video_files set decrypted_path = %s, \
@@ -160,24 +147,35 @@ def job(cpool: SimpleConnectionPool, thalos_dir: Path, output_dir: Path, passphr
             cpool.putconn(conn)
 
 @click.command()
-@click.option('--dbname')
-@click.option('--dbuser')
-@click.option('--thalos_video_dir', default='/thalos/videos')
-@click.option('--output_dir', default='/videos')
-@click.option('--passphrase_file', default='/dev/null')
-def main(dbname, dbuser, thalos_video_dir, output_dir, passphrase_file):
-
-    if not dbname:
-        dbname = flaskconfig.get('DBNAME')
-    if not dbuser:
-        dbuser = flaskconfig.get('DBUSER')
+@click.option('--dbname', default=flaskconfig.get('DBNAME'))
+@click.option('--dbuser', default=flaskconfig.get('DBUSER'))
+@click.option('--thalos_video_dir', default=flaskconfig.get('THALOS_VIDEO_DIR'))
+@click.option('--thalos_cam_name', default=flaskconfig.get('THALOS_CAM_NAME'))
+@click.option('--output_dir', default=flaskconfig.get('VIDEO_OUTPUT_DIR'))
+@click.option('--passphrase_file', default=flaskconfig.get('VIDEO_PASSPHRASE_FILE'))
+@click.option('--print_latest', is_flag=True)
+def main(dbname, dbuser, thalos_video_dir, thalos_cam_name, output_dir, passphrase_file, print_latest):
 
     thalos_dir = Path(thalos_video_dir)
     output_dir = Path(output_dir)
 
+    if print_latest:
+        for cameradir in filter(lambda x: x.is_dir(), thalos_dir.iterdir()):
+            i=0
+            for vid_file in depth_first_video_files(cameradir):
+                if i > 1:
+                    break
+
+                s = vid_file.stat()
+                last_modified = datetime.fromtimestamp(s.st_mtime, tz=timezone.utc)
+                click.echo(str(vid_file.absolute()) + " (" + str(last_modified) + ") ")
+                i+=1
+        return
+
     cpool = SimpleConnectionPool(1, 1, database=dbname, user=dbuser)
     
-    schedule.every(5).seconds.do(job, cpool, thalos_dir, output_dir, passphrase_file )
+    schedule.every(5).minutes.do(video_fetch, cpool, thalos_dir, thalos_cam_name, output_dir, passphrase_file )
+
 
     while 1:
         n = schedule.idle_seconds()

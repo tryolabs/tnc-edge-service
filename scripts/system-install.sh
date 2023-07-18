@@ -13,6 +13,11 @@ if [ "$UID" -lt 1000 ] ; then
 fi
 
 
+if [ "x$ENVIRONMENT" == "x" ] || ! [ -e "$ENVIRONMENT" ] ; then
+  echo "No ENVIRONMENT specified. Please add an export ENVIRONMENT line to .bashrc and restart"
+  exit 1
+fi
+
 if ! which iftop ; then sudo apt -y install iftop ; fi
 if ! which traceroute ; then sudo apt -y install traceroute ; fi
 if ! which jq ; then sudo apt -y install jq ; fi
@@ -22,6 +27,7 @@ if ! dpkg -s python3-venv | grep "Status: install ok installed" ; then sudo apt 
 if ! dpkg -s python3-dev | grep "Status: install ok installed" ; then sudo apt -y install python3-dev ; fi
 if ! which netplan ; then sudo apt -y install netplan.io ; fi
 if ! which rsync ; then sudo apt -y install rsync ; fi
+if ! which tmux ; then sudo apt -y install tmux ; fi
 
 WRITE_RTC_UDEV_RULE=0
 
@@ -151,16 +157,15 @@ EOF
     sudo systemctl start "github-actions-runner.service"
 fi
 
-if ! systemctl is-active "github-actions-runner.service" ; then
-    echo "critical issue with github actions runner!"
-    echo ""
-    journalctl -u github-actions-runner.service
-    exit 1
-fi
+# if ! systemctl is-active "github-actions-runner.service" ; then
+#     echo "critical issue with github actions runner!"
+#     echo ""
+#     journalctl -u github-actions-runner.service
+#     exit 1
+# fi
 
-
-if ! [ -e "/etc/systemd/system/tnc-edge-http.service" ] ; then
-  cat > ./tnc-edge-http.service << EOF
+TMP_FILE="$(mktemp)"
+cat > $TMP_FILE << EOF
 [Unit]
 Description=TNC Edge Service
 After=network.target
@@ -169,7 +174,7 @@ After=network.target
 User=$USERNAME
 Group=$USERNAME
 WorkingDirectory=$USERHOME/tnc-edge-service
-Environment=ENVIRONMENT=$USERHOME/tnc-edge-service/config/prod.py
+Environment=ENVIRONMENT=$ENVIRONMENT
 ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 edge_http.py
 Restart=always
 RestartSec=30
@@ -178,13 +183,20 @@ RestartSec=30
 WantedBy=default.target
 
 EOF
-    sudo cp ./tnc-edge-http.service /etc/systemd/system/tnc-edge-http.service
-    rm ./tnc-edge-http.service
 
-    sudo systemctl daemon-reload 
-    sudo systemctl enable "tnc-edge-http.service"
-    sudo systemctl start "tnc-edge-http.service"
+if ! [ -e "/etc/systemd/system/tnc-edge-http.service" ] ; then
+  sudo cp $TMP_FILE /etc/systemd/system/tnc-edge-http.service
+
+  sudo systemctl daemon-reload 
+  sudo systemctl enable "tnc-edge-http.service"
+  sudo systemctl start "tnc-edge-http.service"
+elif ! diff $TMP_FILE /etc/systemd/system/tnc-edge-http.service >/dev/null; then
+  sudo cp $TMP_FILE /etc/systemd/system/tnc-edge-http.service
+
+  sudo systemctl daemon-reload 
+  sudo systemctl restart "tnc-edge-http.service"
 fi
+rm $TMP_FILE
 
 
 if ! systemctl status postgresql ; then
@@ -266,6 +278,9 @@ gsettings set org.gnome.desktop.screensaver ubuntu-lock-on-suspend false
 sudo sed -i"" -e 's/^APT::Periodic::Update-Package-Lists "\?1"\?;/APT::Periodic::Update-Package-Lists "0";/' /etc/apt/apt.conf.d/10periodic
 sudo sed -i"" -e 's/^APT::Periodic::Download-Upgradeable-Packages "\?1"\?;/APT::Periodic::Download-Upgradeable-Packages "0";/' /etc/apt/apt.conf.d/10periodic
 
+# systemctl status fwupd
+sudo systemctl stop fwupd
+sudo systemctl disable fwupd
 
 if ! which docker-credential-gcr ; then 
   # rm ./docker-credential-gcr ./docker-credential-gcr.tar.gz
@@ -386,11 +401,8 @@ fi
 
 
 
-
-
-if ! [ -e "/etc/systemd/system/thalos-video-autodecrypt.service" ] ; then
-
-  cat > ./thalos-video-autodecrypt.service << EOF
+TMP_FILE="$(mktemp)"
+cat > $TMP_FILE << EOF
 [Unit]
 Description=Thalos Video Auto Decrypt
 After=network.target
@@ -399,8 +411,8 @@ After=network.target
 User=$USERNAME
 Group=$USERNAME
 WorkingDirectory=$USERHOME/tnc-edge-service
-Environment=ENVIRONMENT=$USERHOME/tnc-edge-service/config/prod.py
-ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 video_fetch.py --thalos_video_dir  --output_dir  --passphrase_file $USERHOME/tnc-edge-service/scripts/secret_gpg_passphrase.txt
+Environment=ENVIRONMENT=$ENVIRONMENT
+ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 video_fetch.py
 Restart=always
 RestartSec=30
 
@@ -408,17 +420,30 @@ RestartSec=30
 WantedBy=default.target
 
 EOF
-    sudo cp ./netplan-autoswitcher.service /etc/systemd/system/netplan-autoswitcher.service
-    rm ./netplan-autoswitcher.service
 
-    sudo systemctl daemon-reload 
-    sudo systemctl enable "netplan-autoswitcher.service"
-    sudo systemctl start "netplan-autoswitcher.service"
+if ! [ -e "/etc/systemd/system/thalos-video-autodecrypt.service" ] ; then
+  sudo cp $TMP_FILE /etc/systemd/system/thalos-video-autodecrypt.service
+
+  sudo systemctl daemon-reload 
+  sudo systemctl enable "thalos-video-autodecrypt.service"
+  sudo systemctl start "thalos-video-autodecrypt.service"
+
+elif ! diff $TMP_FILE /etc/systemd/system/tnc-edge-http.service >/dev/null; then
+  sudo cp $TMP_FILE /etc/systemd/system/thalos-video-autodecrypt.service
+
+  sudo systemctl daemon-reload 
+  sudo systemctl restart "thalos-video-autodecrypt.service"
 fi
+rm $TMP_FILE
 
 if ! [ -d "/thalos" ] ; then
   sudo mkdir /thalos
   sudo chmod go+rwx /thalos
+fi
+
+if ! [ -d "/videos" ] ; then
+  sudo mkdir /videos
+  sudo chmod go+rwx /videos
 fi
 
 if ! [ -e "/etc/systemd/system/thalos.mount" ] ; then
@@ -463,4 +488,33 @@ EOF
 fi
 
 
+
+
+if ! [ -e "/etc/systemd/system/purge-video.service" ] ; then
+  
+  sudo cp "$scriptdir/purge-video.sh" /root/purge-video.sh
+
+  cat > ./purge-video.service << EOF
+[Unit]
+Description=Video auto purge service
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+WorkingDirectory=/root
+ExecStart=/bin/bash /root/purge-video.sh
+Restart=always
+RestartSec=1200
+
+[Install]
+WantedBy=default.target
+
+EOF
+    sudo cp ./purge-video.service /etc/systemd/system/purge-video.service
+    rm ./purge-video.service
+
+    sudo systemctl daemon-reload 
+    sudo systemctl enable "purge-video.service"
+    sudo systemctl start "purge-video.service"
+fi
 
