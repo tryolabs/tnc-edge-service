@@ -462,7 +462,7 @@ if ! [ -e "/etc/systemd/system/thalos-video-autodecrypt.service" ] ; then
   sudo systemctl enable "thalos-video-autodecrypt.service"
   sudo systemctl start "thalos-video-autodecrypt.service"
 
-elif ! diff $TMP_FILE /etc/systemd/system/tnc-edge-http.service >/dev/null; then
+elif ! diff $TMP_FILE /etc/systemd/system/thalos-video-autodecrypt.service >/dev/null; then
   sudo cp $TMP_FILE /etc/systemd/system/thalos-video-autodecrypt.service
 
   sudo systemctl daemon-reload 
@@ -552,3 +552,42 @@ EOF
     sudo systemctl start "purge-video.service"
 fi
 
+
+if [ "x$(sudo docker image ls -q gcr.io/edge-gcr/edge-service-image:latest)" != "x" ] ; then
+
+  TMP_FILE="$(mktemp)"
+  cat > $TMP_FILE << EOF
+[Unit]
+Description=Ondeck Runner
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+User=$USERNAME
+Group=$USERNAME
+WorkingDirectory=$USERHOME/tnc-edge-service
+Environment=ENVIRONMENT=$ENVIRONMENT
+ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 run_ondeck.py
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target
+
+EOF
+
+  if ! [ -e "/etc/systemd/system/ondeck-runner.service" ] ; then
+    sudo cp $TMP_FILE /etc/systemd/system/ondeck-runner.service
+
+    sudo systemctl daemon-reload 
+    sudo systemctl enable "ondeck-runner.service"
+    sudo systemctl start "ondeck-runner.service"
+
+  elif ! diff $TMP_FILE /etc/systemd/system/ondeck-runner.service >/dev/null; then
+    sudo cp $TMP_FILE /etc/systemd/system/ondeck-runner.service
+
+    sudo systemctl daemon-reload 
+    sudo systemctl restart "ondeck-runner.service"
+  fi
+  rm $TMP_FILE
+fi
