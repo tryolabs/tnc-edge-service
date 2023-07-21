@@ -6,4 +6,5 @@ db.db
 /config/ericfultz.py
 /config/brancol.py
 /config/manudo.py
+/config/stpatrick.py
 secret*

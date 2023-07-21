@@ -1,9 +1,10 @@
 
+
+SCRIPTNAME="$0"
 scriptdir="$(dirname -- "$( readlink -f -- "$0")")"
 
 USERNAME="$(whoami)"
 USERHOME="/home/$USERNAME"
-
 
 cd "$USERHOME"
 
@@ -12,11 +13,27 @@ if [ "$UID" -lt 1000 ] ; then
   exit 1
 fi
 
-
 if [ "x$ENVIRONMENT" == "x" ] || ! [ -e "$ENVIRONMENT" ] ; then
   echo "No ENVIRONMENT specified. Please add an export ENVIRONMENT line to .bashrc and restart"
   exit 1
 fi
+
+function help {
+  echo "usage: $SCRIPTNAME  [--do-github] "
+  exit 1
+}
+
+while (( "$#" )); do
+   case $1 in
+      --do-github)
+        DO_GITHUB="y"
+         ;;
+      *)
+          help
+          ;;
+   esac
+   shift
+done
 
 if ! which iftop ; then sudo apt -y install iftop ; fi
 if ! which traceroute ; then sudo apt -y install traceroute ; fi
@@ -110,33 +127,35 @@ EOF
   fi
 fi
 
+if [ "$DO_GITHUB" ] ; then
 
-if ! [ -d "$USERHOME/actions-runner" ] ||
-   ! [ -e "$USERHOME/actions-runner/.runner" ] ||
-   ! [ -e "$USERHOME/actions-runner/.credentials" ]  ; then
-  echo "Need to install github.com Self-hosted Actions Runner"
-  echo "follow instructions at https://github.com/productOps/tnc-edge-service/settings/actions/runners/new"
-  echo "if permission is denied, contact github repo admins"
-  echo "use these configs:"
-  echo "  Enter the name of the runner group ... "
-  echo "    hit [Enter] to accept default"
-  echo "  Enter the name of the runner:"
-  echo "    use convention [edge2] where [2] is unique to this box"
-  echo "  Enter any additional labels ... :"
-  echo "    add label [edge-jetson]"
-  echo "  Enter the name of work folder:"
-  echo "    hit [Enter] to accept default"
-  echo ""
-  echo "rerun this install script when complete"
+  if ! [ -d "$USERHOME/actions-runner" ] ||
+    ! [ -e "$USERHOME/actions-runner/.runner" ] ||
+    ! [ -e "$USERHOME/actions-runner/.credentials" ]  ; then
+    echo "Need to install github.com Self-hosted Actions Runner"
+    echo "follow instructions at https://github.com/productOps/tnc-edge-service/settings/actions/runners/new"
+    echo "if permission is denied, contact github repo admins"
+    echo "use these configs:"
+    echo "  Enter the name of the runner group ... "
+    echo "    hit [Enter] to accept default"
+    echo "  Enter the name of the runner:"
+    echo "    use convention [edge2] where [2] is unique to this box"
+    echo "  Enter any additional labels ... :"
+    echo "    add label [edge-jetson]"
+    echo "  Enter the name of work folder:"
+    echo "    hit [Enter] to accept default"
+    echo ""
+    echo "rerun this install script when complete"
 
-  exit 1
-fi
+    exit 1
+  fi
 
-if ! [ -e "/etc/systemd/system/github-actions-runner.service" ] ; then
-  cat > ./github-actions-runner.service << EOF
+  if ! [ -e "/etc/systemd/system/github-actions-runner.service" ] ; then
+    cat > ./github-actions-runner.service << EOF
 [Unit]
 Description=Github Self-served Actions Runner Service
 After=network.target
+StartLimitIntervalSec=0
 
 [Service]
 User=$USERNAME
@@ -144,31 +163,35 @@ Group=$USERNAME
 WorkingDirectory=$USERHOME/actions-runner
 ExecStart=/usr/bin/bash ./run.sh
 Restart=always
+RestartSec=3600
 
 [Install]
 WantedBy=default.target
 
 EOF
-    sudo cp ./github-actions-runner.service /etc/systemd/system/github-actions-runner.service
-    rm ./github-actions-runner.service
+      sudo cp ./github-actions-runner.service /etc/systemd/system/github-actions-runner.service
+      rm ./github-actions-runner.service
 
-    sudo systemctl daemon-reload 
-    sudo systemctl enable "github-actions-runner.service"
-    sudo systemctl start "github-actions-runner.service"
+      sudo systemctl daemon-reload 
+      sudo systemctl enable "github-actions-runner.service"
+      sudo systemctl start "github-actions-runner.service"
+  fi
+
+  if ! systemctl is-active "github-actions-runner.service" ; then
+    echo "critical issue with github actions runner!"
+    echo ""
+    journalctl -u github-actions-runner.service
+    exit 1
+  fi
 fi
 
-# if ! systemctl is-active "github-actions-runner.service" ; then
-#     echo "critical issue with github actions runner!"
-#     echo ""
-#     journalctl -u github-actions-runner.service
-#     exit 1
-# fi
 
 TMP_FILE="$(mktemp)"
 cat > $TMP_FILE << EOF
 [Unit]
 Description=TNC Edge Service
 After=network.target
+StartLimitIntervalSec=0
 
 [Service]
 User=$USERNAME
@@ -281,6 +304,14 @@ sudo sed -i"" -e 's/^APT::Periodic::Download-Upgradeable-Packages "\?1"\?;/APT::
 # systemctl status fwupd
 sudo systemctl stop fwupd
 sudo systemctl disable fwupd
+
+# disable internet-connectivity polls
+if ! [ -e /etc/NetworkManager/conf.d/20-connectivity-ubuntu.conf ] ; then
+  # writing to this file overwrites default internet checking behavior. 
+  # Empty file means no internet polling
+  # see https://askubuntu.com/a/1094558
+  sudo touch /etc/NetworkManager/conf.d/20-connectivity-ubuntu.conf
+fi
 
 if ! which docker-credential-gcr ; then 
   # rm ./docker-credential-gcr ./docker-credential-gcr.tar.gz
@@ -395,10 +426,12 @@ EOF
     rm ./netplan-autoswitcher.service
 
     sudo systemctl daemon-reload 
-    sudo systemctl enable "netplan-autoswitcher.service"
-    sudo systemctl start "netplan-autoswitcher.service"
+    # sudo systemctl enable "netplan-autoswitcher.service"
+    # sudo systemctl start "netplan-autoswitcher.service"
 fi
 
+sudo systemctl stop "netplan-autoswitcher.service"
+sudo systemctl disable "netplan-autoswitcher.service"
 
 
 TMP_FILE="$(mktemp)"
@@ -406,6 +439,7 @@ cat > $TMP_FILE << EOF
 [Unit]
 Description=Thalos Video Auto Decrypt
 After=network.target
+StartLimitIntervalSec=0
 
 [Service]
 User=$USERNAME

@@ -44,15 +44,13 @@ def is_gpg(f: Path, passphrase_file: str):
     p = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     return p.returncode == 0
 
-def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, thalos_cam_name: str, output_dir: Path, passphrase_file: str):
-
-
+def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, thalos_cam_name: str, output_dir: Path, passphrase_file: str, thalos_video_suffix: str):
     
     for cameradir in filter(lambda x: x.is_dir(), thalos_dir.iterdir()):
         if cameradir.name != thalos_cam_name:
             continue
        
-        last_two = []
+        last_two:list[Path] = []
 
         conn: psycopg2.connection = cpool.getconn()
         try:
@@ -61,13 +59,16 @@ def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, thalos_cam_name: 
                     if len(last_two) < 2:
                         last_two.append(vid_file)
 
+                    start_datetime: datetime = datetime.strptime(vid_file.name[0:len('20-07-2023-22-20')], '%d-%m-%Y-%H-%M')
+                    start_datetime = start_datetime.replace(tzinfo=timezone.utc)
+
                     s = vid_file.stat()
-                    last_modified = datetime.fromtimestamp(s.st_mtime, tz=timezone.utc)
+                    last_modified: datetime = datetime.fromtimestamp(s.st_mtime, tz=timezone.utc)
                     cur.execute("select original_path, last_modified from video_files where original_path = %s;", (str(vid_file.absolute()),))
                     rows = list(cur)
                     if len(rows) == 0:
                         # we have never seen this file before!
-                        cur.execute("insert into video_files (original_path, last_modified) values (%s, %s);", (str(vid_file.absolute()), last_modified))
+                        cur.execute("insert into video_files (original_path, last_modified, start_datetime) values (%s, %s, %s);", (str(vid_file.absolute()), last_modified, start_datetime))
                         conn.commit()
                     elif rows[0][1] != last_modified:
                         # found it, update the lastmodified
@@ -93,21 +94,26 @@ def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, thalos_cam_name: 
         conn: psycopg2.connection = cpool.getconn()
         try:
             with conn.cursor() as cur:
-                cur.execute("select * from video_files where original_path = %s;", (str(penultimate_vid.absolute()),))
-                #schema: (original_path, last_modified, decrypted_path, decrypted_datetime, stdout, stderr)
+                cur.execute("select original_path, last_modified, start_datetime, \
+                            decrypted_path, decrypted_datetime, stdout, stderr \
+                            from video_files where original_path = %s;", (str(penultimate_vid.absolute()),))
+                #schema: (original_path, last_modified, start_datetime, decrypted_path, decrypted_datetime, stdout, stderr)
                 rows = list(cur)
                 if len(rows) == 1 and rows[0][3] is not None:
                     # this script has already decrypted this video
                     # on to the next cameradir
                     continue
 
-                # gpg decrypt the video
-
-                output_filename = penultimate_vid.name
-                if output_filename.endswith('.done'):
-                    output_filename = output_filename[0:-5]
+                # compute the output filename
+                start_time: datetime = rows[0][2]
+                print(start_time)
+                str_start_time = start_time.isoformat().replace('-', '').replace(':', '').replace('+0000', 'Z')
+                output_filename = str_start_time + "_" + thalos_cam_name + ".avi"
+                # if output_filename.endswith('.done'):
+                #     output_filename = output_filename[0:-5]
                 output_file = Path(output_dir, output_filename)
 
+                # gpg decrypt the video
                 cmd = None
                 if is_gpg(penultimate_vid, passphrase_file):
                     cmd = "cat %s | gpg --batch --yes \
@@ -153,8 +159,9 @@ def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, thalos_cam_name: 
 @click.option('--thalos_cam_name', default=flaskconfig.get('THALOS_CAM_NAME'))
 @click.option('--output_dir', default=flaskconfig.get('VIDEO_OUTPUT_DIR'))
 @click.option('--passphrase_file', default=flaskconfig.get('VIDEO_PASSPHRASE_FILE'))
+@click.option('--thalos_video_suffix', default=flaskconfig.get('THALOS_VIDEO_SUFFIX'))
 @click.option('--print_latest', is_flag=True)
-def main(dbname, dbuser, thalos_video_dir, thalos_cam_name, output_dir, passphrase_file, print_latest):
+def main(dbname, dbuser, thalos_video_dir, thalos_cam_name, output_dir, passphrase_file, thalos_video_suffix, print_latest):
 
     thalos_dir = Path(thalos_video_dir)
     output_dir = Path(output_dir)
@@ -174,7 +181,7 @@ def main(dbname, dbuser, thalos_video_dir, thalos_cam_name, output_dir, passphra
 
     cpool = SimpleConnectionPool(1, 1, database=dbname, user=dbuser)
     
-    schedule.every(5).minutes.do(video_fetch, cpool, thalos_dir, thalos_cam_name, output_dir, passphrase_file )
+    schedule.every(1).seconds.do(video_fetch, cpool, thalos_dir, thalos_cam_name, output_dir, passphrase_file, thalos_video_suffix )
 
 
     while 1:

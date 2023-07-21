@@ -7,6 +7,7 @@ class VideoFile(Base):
     
     original_path = Column(VARCHAR(), primary_key=True, autoincrement=False, nullable=False)
     last_modified = Column(DateTime(timezone=True), autoincrement=False, nullable=False)
+    start_datetime = Column(DateTime(timezone=True), autoincrement=False, nullable=False)
     decrypted_path = Column(VARCHAR(), autoincrement=False, nullable=True)
     decrypted_datetime = Column(DateTime(timezone=True), autoincrement=False, nullable=True)
     stdout = Column(VARCHAR(), autoincrement=False, nullable=True)
@@ -18,6 +19,7 @@ class VideoFile(Base):
             [n + '='+ str(self.__getattribute__(n)) for n in [
                 "original_path",
                 "last_modified",
+                "start_datetime",
                 "decrypted_path",
                 "decrypted_datetime",
                 "stdout",
