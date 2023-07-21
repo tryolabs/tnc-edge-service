@@ -21,11 +21,35 @@ if 'ENVIRONMENT' in os.environ:
     flaskconfig.from_envvar('ENVIRONMENT')
 
 def next_videos(session: Session):
-     results: Query[VideoFile] = session.query(VideoFile
-                        ).outerjoin(OndeckData, VideoFile.decrypted_path == OndeckData.video_uri
-                        ).filter(VideoFile.decrypted_path != None
-                        ).filter(OndeckData.video_uri == None
-                        ).order_by(VideoFile.decrypted_datetime.asc())
+     workday_start_hour_at_utc_interval = '8 hours';
+     workday_start_hour_at_utc_timestr = '08:00Z';
+     num_vids_required = 4;
+     results: Query[VideoFile] = session.query(VideoFile).from_statement(sa.text(
+        """
+        select video_files.* from video_files 
+        join (
+            select max(workday_counts.workday) most_recent_active_workday 
+            from (
+                select date(start_datetime AT TIME ZONE 'utc' - interval :timei ) as workday,
+                    count(*) as count 
+                from video_files 
+                where decrypted_path is not null 
+                group by workday
+            ) workday_counts 
+            where workday_counts.count > :numvids
+        ) workdays 
+        on video_files.start_datetime >= workdays.most_recent_active_workday + time with time zone :times 
+        left join ondeckdata 
+        on video_files.decrypted_path = ondeckdata.video_uri 
+        where video_files.decrypted_path is not null 
+        and ondeckdata.video_uri is null 
+        order by video_files.decrypted_datetime asc;
+        """)).params(
+         {
+             "timei": workday_start_hour_at_utc_interval,
+             "times": workday_start_hour_at_utc_timestr,
+             "numvids": num_vids_required,
+         })
      return list(results)
 
 
