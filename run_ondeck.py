@@ -20,7 +20,7 @@ flaskconfig.from_object('config.defaults')
 if 'ENVIRONMENT' in os.environ:
     flaskconfig.from_envvar('ENVIRONMENT')
 
-def next_videos(session: Session) -> list[VideoFile]:
+def next_videos(session: Session):
      results: Query[VideoFile] = session.query(VideoFile
                         ).outerjoin(OndeckData, VideoFile.decrypted_path == OndeckData.video_uri
                         ).filter(VideoFile.decrypted_path != None
@@ -45,7 +45,8 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker):
         if last_dot_index < 0:
             last_dot_index = None
         json_out_file: Path = output_dir / Path(decrypted_path.name[0:last_dot_index] + "_ondeck.json")
-        cmd: str = "docker run --rm -v /videos:/videos --runtime=nvidia --network none \
+        # sudo /usr/bin/docker run --rm -v /videos:/videos --runtime=nvidia --network none gcr.io/edge-gcr/edge-service-image:latest --output /videos --input /videos/21-07-2023-09-55.avi
+        cmd: str = "sudo /usr/bin/docker run --rm -v /videos:/videos --runtime=nvidia --network none \
                 gcr.io/edge-gcr/edge-service-image:latest \
                 --output %s --input %s"%(
             str(json_out_file.absolute()), 
@@ -81,7 +82,7 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker):
 @click.option('--dbname', default=flaskconfig.get('DBNAME'))
 @click.option('--dbuser', default=flaskconfig.get('DBUSER'))
 @click.option('--output_dir', default=flaskconfig.get('VIDEO_OUTPUT_DIR'))
-@click.option('--engine', default=None)
+@click.option('--engine', default=flaskconfig.get('ONDECK_MODEL_ENGINE'))
 def main(dbname, dbuser, output_dir, engine):
 
     output_dir = Path(output_dir)

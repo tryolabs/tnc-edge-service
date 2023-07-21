@@ -106,6 +106,7 @@ def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, thalos_cam_name: 
 
                 # compute the output filename
                 start_time: datetime = rows[0][2]
+                start_time = start_time.astimezone(timezone.utc)
                 print(start_time)
                 str_start_time = start_time.isoformat().replace('-', '').replace(':', '').replace('+0000', 'Z')
                 output_filename = str_start_time + "_" + thalos_cam_name + ".avi"
