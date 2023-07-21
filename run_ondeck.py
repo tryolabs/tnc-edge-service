@@ -73,7 +73,8 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker):
                         }
                 )
                 session.commit()
-        video_files.extend(next_videos(session))
+        with sessionmaker() as session:
+            video_files.extend(next_videos(session))
 
 
 @click.command()
