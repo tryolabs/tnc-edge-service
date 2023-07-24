@@ -213,7 +213,7 @@ if ! [ -e "/etc/systemd/system/tnc-edge-http.service" ] ; then
   sudo systemctl daemon-reload 
   sudo systemctl enable "tnc-edge-http.service"
   sudo systemctl start "tnc-edge-http.service"
-elif ! diff $TMP_FILE /etc/systemd/system/tnc-edge-http.service >/dev/null; then
+elif ! sudo diff $TMP_FILE /etc/systemd/system/tnc-edge-http.service >/dev/null; then
   sudo cp $TMP_FILE /etc/systemd/system/tnc-edge-http.service
 
   sudo systemctl daemon-reload 
@@ -462,7 +462,7 @@ if ! [ -e "/etc/systemd/system/thalos-video-autodecrypt.service" ] ; then
   sudo systemctl enable "thalos-video-autodecrypt.service"
   sudo systemctl start "thalos-video-autodecrypt.service"
 
-elif ! diff $TMP_FILE /etc/systemd/system/thalos-video-autodecrypt.service >/dev/null; then
+elif ! sudo diff $TMP_FILE /etc/systemd/system/thalos-video-autodecrypt.service >/dev/null; then
   sudo cp $TMP_FILE /etc/systemd/system/thalos-video-autodecrypt.service
 
   sudo systemctl daemon-reload 
@@ -583,7 +583,7 @@ EOF
     sudo systemctl enable "ondeck-runner.service"
     sudo systemctl start "ondeck-runner.service"
 
-  elif ! diff $TMP_FILE /etc/systemd/system/ondeck-runner.service >/dev/null; then
+  elif ! sudo diff $TMP_FILE /etc/systemd/system/ondeck-runner.service >/dev/null; then
     sudo cp $TMP_FILE /etc/systemd/system/ondeck-runner.service
 
     sudo systemctl daemon-reload 

@@ -58,7 +58,7 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker):
     video_files: list[VideoFile] = []
 
     with sessionmaker() as session:
-        video_files.extend(next_videos(session))
+        video_files = next_videos(session)
 
     # print(video_files)
     while len(video_files) > 0:
@@ -99,7 +99,7 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker):
                 )
                 session.commit()
         with sessionmaker() as session:
-            video_files.extend(next_videos(session))
+            video_files = next_videos(session)
 
 
 @click.command()
