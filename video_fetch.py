@@ -182,13 +182,14 @@ def main(dbname, dbuser, thalos_video_dir, thalos_cam_name, output_dir, passphra
 
     cpool = SimpleConnectionPool(1, 1, database=dbname, user=dbuser)
     
-    schedule.every(1).seconds.do(video_fetch, cpool, thalos_dir, thalos_cam_name, output_dir, passphrase_file, thalos_video_suffix )
+    schedule.every(5).minutes.do(video_fetch, cpool, thalos_dir, thalos_cam_name, output_dir, passphrase_file, thalos_video_suffix )
 
 
     while 1:
         n = schedule.idle_seconds()
         if n is None:
             # no more jobs
+            print("No more jobs. exiting")
             break
         elif n > 0:
             # sleep exactly the right amount of time
