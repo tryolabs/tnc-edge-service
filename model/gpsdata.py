@@ -1,19 +1,22 @@
 from .base import Base
 
-from sqlalchemy import Column, Integer, String, DateTime, text
+from sqlalchemy import Column, Integer, String, DateTime, text, Float
 
 class GpsData(Base):
     __tablename__ = 'gpsdata'
 
-    id = Column(Integer, primary_key=True)
-    sentence = Column(String)
+    gps_datetime = Column(DateTime(timezone=True), primary_key=True)
+    lat = Column(Float(), nullable=False)
+    lon = Column(Float(), nullable=False)
     datetime = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
 
     def __str__(self) -> str:
          return 'GpsData(' + ', '.join(
             [n + '='+ str(self.__getattribute__(n)) for n in [
-                'id',
-                'sentence',
+                'gps_datetime',
+                'lat',
+                'lon',
+                'datetime',
             ]]) + ')'
 example_gps_data = '''
 $ cat /mnt/thalos/brancol/export_gps/brancol_20230601_145918.txt 

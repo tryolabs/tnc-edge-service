@@ -7,6 +7,7 @@ Create Date: 2023-07-20 16:58:45.490762
 """
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 from datetime import datetime, timezone
 
@@ -33,9 +34,10 @@ def upgrade() -> None:
                 'DD-MM-YYYY-HH24-MI TZH TZM'
                )
                """)
-    op.alter_column(
-        'video_files', 
-        sa.Column('start_datetime', sa.DateTime(timezone=True), autoincrement=False, nullable=False))
+    op.alter_column('video_files', 'start_datetime',
+               existing_type=postgresql.TIMESTAMP(timezone=True),
+               nullable=False,
+               autoincrement=False)
     # ### end Alembic commands ###
 
 
