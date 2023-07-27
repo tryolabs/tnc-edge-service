@@ -12,6 +12,7 @@ class VideoFile(Base):
     decrypted_datetime = Column(DateTime(timezone=True), autoincrement=False, nullable=True)
     stdout = Column(VARCHAR(), autoincrement=False, nullable=True)
     stderr = Column(VARCHAR(), autoincrement=False, nullable=True)
+    cam_name = Column(VARCHAR(), nullable=True)
     
 
     def __str__(self) -> str:
@@ -24,4 +25,5 @@ class VideoFile(Base):
                 "decrypted_datetime",
                 "stdout",
                 "stderr",
+                "cam_name",
             ]]) + ')'

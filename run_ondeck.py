@@ -20,7 +20,7 @@ flaskconfig.from_object('config.defaults')
 if 'ENVIRONMENT' in os.environ:
     flaskconfig.from_envvar('ENVIRONMENT')
 
-def next_videos(session: Session):
+def next_videos(session: Session, thalos_cam_name):
      workday_start_hour_at_utc_interval = '8 hours';
      workday_start_hour_at_utc_timestr = '08:00Z';
      num_vids_required = 4;
@@ -42,23 +42,25 @@ def next_videos(session: Session):
         left join ondeckdata 
         on video_files.decrypted_path = ondeckdata.video_uri 
         where video_files.decrypted_path is not null 
-        and ondeckdata.video_uri is null 
+        and ondeckdata.video_uri is null
+        and video_files.cam_name = :cam_name
         order by video_files.decrypted_datetime asc;
         """)).params(
          {
              "timei": workday_start_hour_at_utc_interval,
              "times": workday_start_hour_at_utc_timestr,
              "numvids": num_vids_required,
+             "cam_name": thalos_cam_name,
          })
      return list(results)
 
 
-def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker):
+def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalos_cam_name):
     
     video_files: list[VideoFile] = []
 
     with sessionmaker() as session:
-        video_files = next_videos(session)
+        video_files = next_videos(session, thalos_cam_name)
 
     # print(video_files)
     while len(video_files) > 0:
@@ -107,7 +109,8 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker):
 @click.option('--dbuser', default=flaskconfig.get('DBUSER'))
 @click.option('--output_dir', default=flaskconfig.get('VIDEO_OUTPUT_DIR'))
 @click.option('--engine', default=flaskconfig.get('ONDECK_MODEL_ENGINE'))
-def main(dbname, dbuser, output_dir, engine):
+@click.option('--thalos_cam_name', default=flaskconfig.get('THALOS_CAM_NAME'))
+def main(dbname, dbuser, output_dir, engine, thalos_cam_name):
 
     output_dir = Path(output_dir)
 
@@ -120,8 +123,13 @@ def main(dbname, dbuser, output_dir, engine):
 
     ModelBase.metadata.create_all(sa_engine)
 
+    def runonce(output_dir, engine, sessionmaker, thalos_cam_name):
+        run_ondeck(output_dir, engine, sessionmaker, thalos_cam_name)
+        return schedule.CancelJob
     
-    schedule.every(5).minutes.do(run_ondeck, output_dir, engine, sessionmaker )
+    schedule.every(1).seconds.do(runonce, output_dir, engine, sessionmaker, thalos_cam_name)
+
+    schedule.every(5).minutes.do(run_ondeck, output_dir, engine, sessionmaker, thalos_cam_name )
 
     while 1:
         n = schedule.idle_seconds()
@@ -136,3 +144,4 @@ def main(dbname, dbuser, output_dir, engine):
 
 if __name__ == '__main__':
     main()
+

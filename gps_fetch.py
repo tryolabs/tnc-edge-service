@@ -88,6 +88,11 @@ def main(dbname, dbuser, thalos_gps_dir):
 
     cpool = SimpleConnectionPool(1, 1, database=dbname, user=dbuser)
     
+    def runonce(cpool, thalos_gps_dir ):
+        gps_fetch(cpool, thalos_gps_dir)
+        return schedule.CancelJob
+
+    schedule.every(1).seconds.do(runonce, cpool, thalos_gps_dir )
     schedule.every(15).minutes.do(gps_fetch, cpool, thalos_gps_dir )
 
 
