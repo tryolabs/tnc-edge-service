@@ -448,7 +448,7 @@ WorkingDirectory=$USERHOME/tnc-edge-service
 Environment=ENVIRONMENT=$ENVIRONMENT
 ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 video_fetch.py
 Restart=always
-RestartSec=30
+RestartSec=300
 
 [Install]
 WantedBy=default.target
@@ -591,3 +591,40 @@ EOF
   fi
   rm $TMP_FILE
 fi
+
+
+TMP_FILE="$(mktemp)"
+cat > $TMP_FILE << EOF
+[Unit]
+Description=Thalos GPS Auto Import
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+User=$USERNAME
+Group=$USERNAME
+WorkingDirectory=$USERHOME/tnc-edge-service
+Environment=ENVIRONMENT=$ENVIRONMENT
+ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 gps_fetch.py
+Restart=always
+RestartSec=300
+
+[Install]
+WantedBy=default.target
+
+EOF
+
+if ! [ -e "/etc/systemd/system/gps_fetch.service" ] ; then
+  sudo cp $TMP_FILE /etc/systemd/system/gps_fetch.service
+
+  sudo systemctl daemon-reload 
+  sudo systemctl enable "gps_fetch.service"
+  sudo systemctl start "gps_fetch.service"
+
+elif ! sudo diff $TMP_FILE /etc/systemd/system/gps_fetch.service >/dev/null; then
+  sudo cp $TMP_FILE /etc/systemd/system/gps_fetch.service
+
+  sudo systemctl daemon-reload 
+  sudo systemctl restart "gps_fetch.service"
+fi
+rm $TMP_FILE
