@@ -110,7 +110,8 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalo
 @click.option('--output_dir', default=flaskconfig.get('VIDEO_OUTPUT_DIR'))
 @click.option('--engine', default=flaskconfig.get('ONDECK_MODEL_ENGINE'))
 @click.option('--thalos_cam_name', default=flaskconfig.get('THALOS_CAM_NAME'))
-def main(dbname, dbuser, output_dir, engine, thalos_cam_name):
+@click.option('--print_queue', is_flag=True)
+def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue):
 
     output_dir = Path(output_dir)
 
@@ -122,6 +123,13 @@ def main(dbname, dbuser, output_dir, engine, thalos_cam_name):
     sessionmaker = SessionMaker(sa_engine)
 
     ModelBase.metadata.create_all(sa_engine)
+
+    if print_queue:
+        with sessionmaker() as session:
+            video_files = next_videos(session, thalos_cam_name)
+            for v in video_files:
+                print(v.decrypted_path)
+        return
 
     def runonce(output_dir, engine, sessionmaker, thalos_cam_name):
         run_ondeck(output_dir, engine, sessionmaker, thalos_cam_name)
