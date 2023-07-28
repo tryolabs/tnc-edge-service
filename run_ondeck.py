@@ -28,7 +28,7 @@ def next_videos(session: Session, thalos_cam_name):
         """
         select video_files.* from video_files 
         join (
-            select max(workday_counts.workday) most_recent_active_workday 
+            select COALESCE(max(workday_counts.workday), '1970-01-01') most_recent_active_workday 
             from (
                 select date(start_datetime AT TIME ZONE 'utc' - interval :timei ) as workday,
                     count(*) as count 
@@ -101,7 +101,7 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalo
                 )
                 session.commit()
         with sessionmaker() as session:
-            video_files = next_videos(session)
+            video_files = next_videos(session, thalos_cam_name)
 
 
 @click.command()
