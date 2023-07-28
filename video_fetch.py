@@ -1,5 +1,5 @@
 
-from datetime import datetime,timezone
+from datetime import datetime,timezone,timedelta
 import click
 import codecs
 import os
@@ -51,18 +51,23 @@ def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, output_dir: Path,
         new_vids: list[Path] = []
 
         discovered_matching_last_modified = 0
+        last_start_datetime = None
 
         conn: psycopg2.connection = cpool.getconn()
         try:
             with conn.cursor() as cur:
                 for vid_file in depth_first_video_files(cameradir):
-                    # if last_vid is None:
-                    #     last_vid = vid_file
-
                     start_datetime: datetime = datetime.strptime(
                         vid_file.name[0:len('20-07-2023-22-20')],
                         '%d-%m-%Y-%H-%M')
                     start_datetime = start_datetime.replace(tzinfo=timezone.utc)
+                    if last_start_datetime is None:
+                        last_start_datetime = start_datetime
+
+                    if start_datetime + timedelta(days=2) < last_start_datetime :
+                        # ok, we're too far back in time now. No reason to keep going back
+                        # I'm done searching.
+                        break
 
                     s = vid_file.stat()
                     last_modified: datetime = datetime.fromtimestamp(s.st_mtime, tz=timezone.utc)
@@ -96,6 +101,7 @@ def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, output_dir: Path,
         if len(new_vids) == 0:
             # there are 0 videos for this camera. Skip this camera
             continue
+        print("working on", len(new_vids), "new videos")
 
         new_vids.reverse()
 

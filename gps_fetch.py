@@ -49,8 +49,8 @@ def gps_fetch(cpool: SimpleConnectionPool, thalos_dir: Path):
                     SELECT t.file_dt FROM t 
                     LEFT JOIN gpsdata ON t.file_dt = gpsdata.gps_datetime
                     WHERE gpsdata.gps_datetime IS NULL;""")
-                print(cur.query)
-                print(cur.description)
+                # print(cur.query)
+                # print(cur.description)
                 rows = cur.fetchall()
                 new_dts.extend(col for cols in rows for col in cols)
 
@@ -72,7 +72,7 @@ def gps_fetch(cpool: SimpleConnectionPool, thalos_dir: Path):
                         "INSERT INTO gpsdata (gps_datetime, lat, lon) VALUES (%s, %s, %s);",
                         insert_tuples
                     )
-                    print(cur.query)
+                    # print(cur.query)
                 conn.commit()
         finally:
             cpool.putconn(conn)
