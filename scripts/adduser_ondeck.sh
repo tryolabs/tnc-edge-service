@@ -41,7 +41,7 @@ EOF
 
 # mktemp
 
-# ondeck ALL=NOPASSWD: /usr/bin/docker 
+# ondeck ALL=NOPASSWD: /usr/bin/docker *
 
 
 gapp_creds_config_line=$(sudo grep -E '^export GOOGLE_APPLICATION_CREDENTIALS=' "$USERHOME/.bashrc")

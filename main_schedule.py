@@ -34,25 +34,6 @@ import boto3
 s3 = boto3.resource('s3')
 bucket = s3.Bucket('51-gema-dev-dp-raw')
 
-def s3uploader(session: Session):
-
-    try:
-        now = datetime.now()
-
-        result = session.query(Test)\
-            .where(Test.datetime_from > now - timedelta(days=13), Test.vector_id == 2)\
-            .order_by(Test.datetime.desc())\
-            .limit(1).all()
-        rows = list(result)
-        if len(rows) > 0:
-            
-            body = io.BytesIO()
-            body.write((','.join([column.name for column in Test.__mapper__.columns]) + '\n').encode())
-            [body.write((','.join([str(getattr(row, column.name)) for column in Test.__mapper__.columns]) + '\n').encode()) for row in rows]
-            bucket.put_object(Key="tnc_edge/"+Test.__tablename__+"/"+str(int(now.timestamp()))+".csv", Body=body.getvalue())
-    except Exception as e:
-        print("Error: exception in s3 uploader", e)
-
 
 def parse_and_schedule(vector, execute_func, *args):
 
@@ -134,8 +115,6 @@ def main(dbname, dbuser):
         for v in all_vectors:
             pass
 
-        schedule.every(1).hours.do(s3uploader)
-        s3uploader(session)
 
         while 1:
             n = schedule.idle_seconds()

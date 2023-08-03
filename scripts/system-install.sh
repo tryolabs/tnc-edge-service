@@ -40,11 +40,13 @@ if ! which traceroute ; then sudo apt -y install traceroute ; fi
 if ! which jq ; then sudo apt -y install jq ; fi
 if ! which curl ; then sudo apt -y install curl ; fi
 if ! which mount.cifs ; then sudo apt -y install cifs-utils ; fi
+if ! dpkg -s python3-pip | grep "Status: install ok installed" ; then sudo apt -y install python3-pip ; fi
 if ! dpkg -s python3-venv | grep "Status: install ok installed" ; then sudo apt -y install python3-venv ; fi
 if ! dpkg -s python3-dev | grep "Status: install ok installed" ; then sudo apt -y install python3-dev ; fi
 if ! which netplan ; then sudo apt -y install netplan.io ; fi
 if ! which rsync ; then sudo apt -y install rsync ; fi
 if ! which tmux ; then sudo apt -y install tmux ; fi
+if ! which parallel ; then sudo apt -y install parallel ; fi
 
 WRITE_RTC_UDEV_RULE=0
 
@@ -628,3 +630,10 @@ elif ! sudo diff $TMP_FILE /etc/systemd/system/gps_fetch.service >/dev/null; the
   sudo systemctl restart "gps_fetch.service"
 fi
 rm $TMP_FILE
+
+if [ $RUN_COPY_PY_PANDAS_TO_VENV ] ; then
+  cp -r /usr/lib/python3/dist-packages/pytz* $USERHOME/tnc-edge-service/venv/lib/python3.8/site-packages/
+  cp -r /usr/lib/python3/dist-packages/tzdata* $USERHOME/tnc-edge-service/venv/lib/python3.8/site-packages/
+  cp -r /usr/lib/python3/dist-packages/numpy* $USERHOME/tnc-edge-service/venv/lib/python3.8/site-packages/
+  cp -r /usr/lib/python3/dist-packages/pandas* $USERHOME/tnc-edge-service/venv/lib/python3.8/site-packages/
+fi
