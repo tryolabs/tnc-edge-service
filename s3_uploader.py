@@ -70,7 +70,7 @@ def s3uploader(cpool, boat, ver):
         'fishaidata',
         'gpsdata',
         'internetdata',
-        'ondeckdata',
+        'deckhandevents_mostrecentlonglineevent_jsonextracted',
         'tests',
         'video_files',
     ]

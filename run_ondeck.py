@@ -1,5 +1,6 @@
 
 import click
+import json
 import os
 from pathlib import Path
 import re
@@ -82,14 +83,29 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalo
             cmd += " --model %s"%( str(engine.absolute()), )
         p: CompletedProcess[str] = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if p.returncode == 0:
-            with sessionmaker() as session:
-                session.execute(sa.text("insert into ondeckdata ( video_uri, cocoannotations_uri ) \
-                            values ( :decrypted_path, :json_out_file ) ;"), {
-                                "decrypted_path": str(decrypted_path.absolute()),
-                                "json_out_file":str(json_out_file.absolute())
-                        }
-                )
-                session.commit()
+
+            with json_out_file.open() as f:
+                o: dict = json.load(f)
+                cnt = o.get('overallCount')
+                runtime = o.get('overallRuntimeMs')
+                frames = o.get('frames', default=[])
+                trackedframes = filter(lambda frame: len(frame.get('trackingIds'))>0, frames)
+                confidencesarrs = map(lambda frame: frame.get('confidence'), trackedframes)
+                confidences = [c for confidencesarr in confidencesarrs for c in confidencesarr]
+                meanconf = float(sum(confidences)) / float(len(confidences))
+
+                with sessionmaker() as session:
+                    session.execute(sa.text("insert into ondeckdata ( video_uri, cocoannotations_uri, \
+                                            overallcount, overallruntimems, tracked_mean_confidence ) \
+                                values ( :decrypted_path, :json_out_file , :cnt, :runt, :mean_c) ;"), {
+                                    "decrypted_path": str(decrypted_path.absolute()),
+                                    "json_out_file":str(json_out_file.absolute()),
+                                    "cnt":cnt, 
+                                    "runt":runtime, 
+                                    "mean_c":meanconf,
+                            }
+                    )
+                    session.commit()
         else:
             # print("ondeck model failure. stdout, stderr:", p.stdout, p.stderr)
             with sessionmaker() as session:

@@ -1,7 +1,7 @@
 from .base import Base
 from .videofiles import VideoFile
 
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, text
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, text, REAL
 from sqlalchemy.orm import relationship
 
 class OndeckData(Base):
@@ -12,6 +12,9 @@ class OndeckData(Base):
     video_file = relationship(VideoFile)
     cocoannotations_uri = Column(String)
     datetime = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
+    overallcount = Column(Integer)
+    overallruntimems = Column(REAL)
+    tracked_mean_confidence = Column(REAL)
 
     def __str__(self) -> str:
          return 'OndeckData(' + ', '.join(
