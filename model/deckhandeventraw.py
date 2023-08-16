@@ -4,7 +4,7 @@ from .base import Base
 from sqlalchemy import Column, Integer, String, DateTime, text
 
 
-class DeckhandEvent(Base):
+class DeckhandEventRaw(Base):
 
     __tablename__ = 'deckhandevents'
 

@@ -51,7 +51,7 @@ admin.add_view(ModelView(GpsData, db.session))
 admin.add_view(ModelView(FishAiData, db.session))
 admin.add_view(ModelView(OndeckData, db.session))
 admin.add_view(InternetDataView(db.session))
-admin.add_view(ModelView(DeckhandEvent, db.session))
+admin.add_view(ModelView(DeckhandEventView, db.session))
 
 admin.add_view(ModelView(BoatSchedule, db.session))
 

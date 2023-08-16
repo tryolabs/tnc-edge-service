@@ -1,6 +1,7 @@
 from .base import Base
 
 from sqlalchemy import Column, Integer, String, DateTime, VARCHAR, text, PrimaryKeyConstraint
+# from sqlalchemy.orm import relationship
 
 class VideoFile(Base):
     __tablename__ = 'video_files'
@@ -14,6 +15,7 @@ class VideoFile(Base):
     stderr = Column(VARCHAR(), autoincrement=False, nullable=True)
     cam_name = Column(VARCHAR(), nullable=True)
     
+    # ondeckdata = relationship("OndeckData", back_populates="video_file")
 
     def __str__(self) -> str:
          return 'VideoFile(' + ', '.join(

@@ -7,7 +7,8 @@ from .test import Test, T, TestModelView
 
 from .gpsdata import GpsData
 
-from .deckhandevent import DeckhandEvent
+from .deckhandeventraw import DeckhandEventRaw
+from .deckhandeventview import DeckhandEventView
 
 from .fishaidata import FishAiData
 from .ondeckdata import OndeckData
