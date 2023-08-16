@@ -19,7 +19,7 @@ if [ "x$ENVIRONMENT" == "x" ] || ! [ -e "$ENVIRONMENT" ] ; then
 fi
 
 function help {
-  echo "usage: $SCRIPTNAME  [--do-github] "
+  echo "usage: $SCRIPTNAME  [--do-github] [--do-copy-numpy] "
   exit 1
 }
 
@@ -28,6 +28,9 @@ while (( "$#" )); do
       --do-github)
         DO_GITHUB="y"
          ;;
+      --do-copy-numpy)
+        DO_COPY_PY_PANDAS_TO_VENV="y"
+        ;;
       *)
           help
           ;;
@@ -47,6 +50,7 @@ if ! which netplan ; then sudo apt -y install netplan.io ; fi
 if ! which rsync ; then sudo apt -y install rsync ; fi
 if ! which tmux ; then sudo apt -y install tmux ; fi
 if ! which parallel ; then sudo apt -y install parallel ; fi
+if ! which par2 ; then sudo apt -y install par2 ; fi
 
 WRITE_RTC_UDEV_RULE=0
 
@@ -631,9 +635,47 @@ elif ! sudo diff $TMP_FILE /etc/systemd/system/gps_fetch.service >/dev/null; the
 fi
 rm $TMP_FILE
 
-if [ $RUN_COPY_PY_PANDAS_TO_VENV ] ; then
+if [ $DO_COPY_PY_PANDAS_TO_VENV ] ; then
   cp -r /usr/lib/python3/dist-packages/pytz* $USERHOME/tnc-edge-service/venv/lib/python3.8/site-packages/
   cp -r /usr/lib/python3/dist-packages/tzdata* $USERHOME/tnc-edge-service/venv/lib/python3.8/site-packages/
   cp -r /usr/lib/python3/dist-packages/numpy* $USERHOME/tnc-edge-service/venv/lib/python3.8/site-packages/
   cp -r /usr/lib/python3/dist-packages/pandas* $USERHOME/tnc-edge-service/venv/lib/python3.8/site-packages/
 fi
+
+
+
+TMP_FILE="$(mktemp)"
+cat > $TMP_FILE << EOF
+[Unit]
+Description=S3 Upload Tnc Edge DB
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+User=$USERNAME
+Group=$USERNAME
+WorkingDirectory=$USERHOME/tnc-edge-service
+Environment=ENVIRONMENT=$ENVIRONMENT
+ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 s3_uploader.py
+Restart=always
+RestartSec=3600
+
+[Install]
+WantedBy=default.target
+
+EOF
+
+if ! [ -e "/etc/systemd/system/s3_uploader.service" ] ; then
+  sudo cp $TMP_FILE /etc/systemd/system/s3_uploader.service
+
+  sudo systemctl daemon-reload 
+  sudo systemctl enable "s3_uploader.service"
+  sudo systemctl start "s3_uploader.service"
+
+elif ! sudo diff $TMP_FILE /etc/systemd/system/s3_uploader.service >/dev/null; then
+  sudo cp $TMP_FILE /etc/systemd/system/s3_uploader.service
+
+  sudo systemctl daemon-reload 
+  sudo systemctl restart "s3_uploader.service"
+fi
+rm $TMP_FILE

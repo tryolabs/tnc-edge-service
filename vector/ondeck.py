@@ -8,6 +8,7 @@ from model.fishaidata import FishAiData
 from model.test import T
 import json
 from datetime import datetime, timezone, timedelta
+from dateutil.parser import isoparse
 
 import os
 import math
@@ -45,7 +46,7 @@ class RunOndeckVector():
             cocofilestat = os.stat(cocofilename)
             with open(cocofilename) as f:
                 raw = json.load(f)
-                starttime = datetime.fromisoformat(raw['info']['date_created'])
+                starttime = isoparse(raw['info']['date_created'])
                 endtime = fishAiData.datetime
                 annos = raw['annotations']
                 tracks_set = {}

@@ -101,7 +101,7 @@ def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, output_dir: Path,
         if len(new_vids) == 0:
             # there are 0 videos for this camera. Skip this camera
             continue
-        print("working on", len(new_vids), "new videos")
+        click.echo("working on {} new videos".format(len(new_vids)))
 
         new_vids.reverse()
 
@@ -191,7 +191,7 @@ def main(dbname, dbuser, thalos_video_dir, output_dir, passphrase_file, thalos_v
 
                 s = vid_file.stat()
                 last_modified = datetime.fromtimestamp(s.st_mtime, tz=timezone.utc)
-                click.echo(str(vid_file.absolute()) + " (" + str(last_modified) + ") ")
+                click.echo("{} ({})".format(str(vid_file.absolute()), str(last_modified)))
                 i+=1
         return
 
@@ -210,11 +210,11 @@ def main(dbname, dbuser, thalos_video_dir, output_dir, passphrase_file, thalos_v
         n = schedule.idle_seconds()
         if n is None:
             # no more jobs
-            print("No more jobs. exiting")
+            click.echo("No more jobs. exiting")
             break
         elif n > 0:
             # sleep exactly the right amount of time
-            print("sleeping for:", n)
+            click.echo("sleeping for: {}".format(n))
             time.sleep(n)
         schedule.run_pending()
 

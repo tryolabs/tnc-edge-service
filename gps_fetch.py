@@ -1,5 +1,6 @@
 
 from datetime import datetime,timezone
+from dateutil.parser import isoparse
 import click
 import codecs
 import os
@@ -23,7 +24,7 @@ def thalos_gps_filename_date(filename: str) -> datetime:
     m = re.match('.*(\d{8}).?(\d{6})\.txt', filename)
     if not m:
         return None
-    return datetime.fromisoformat(m[1] + " " + m[2] + "+00:00")
+    return isoparse(m[1] + " " + m[2] + "+00:00")
 
 def gps_fetch(cpool: SimpleConnectionPool, thalos_dir: Path):
 
@@ -39,12 +40,14 @@ def gps_fetch(cpool: SimpleConnectionPool, thalos_dir: Path):
 
     new_dts = []
 
-    dts_tupled = list(map(lambda x: (x,), dt_index.keys()))
-    if len(dts_tupled) > 0:
+    # dts_tupled = list(map(lambda x: (x,), dt_index.keys()))
+    if len(dt_index.keys()) > 0:
         try:
             with conn.cursor() as cur:
-                args = ','.join(cur.mogrify("(%s)", [dt]).decode('utf-8')
-                    for dt in dt_index.keys())
+                args = ','.join(
+                    cur.mogrify("(%s)", [dt]).decode('utf-8')
+                    for dt in dt_index.keys()
+                )
                 cur.execute("""WITH t (file_dt) AS ( VALUES """ + args + """ )
                     SELECT t.file_dt FROM t 
                     LEFT JOIN gpsdata ON t.file_dt = gpsdata.gps_datetime
@@ -67,6 +70,7 @@ def gps_fetch(cpool: SimpleConnectionPool, thalos_dir: Path):
                         insert_tuples.append((new_dt, lat, lon,))
 
             if len(insert_tuples) > 0:
+                click.echo('inserting {} new gps coords'.format(len(insert_tuples)))
                 with conn.cursor() as cur:
                     cur.executemany(
                         "INSERT INTO gpsdata (gps_datetime, lat, lon) VALUES (%s, %s, %s);",
@@ -100,11 +104,11 @@ def main(dbname, dbuser, thalos_gps_dir):
         n = schedule.idle_seconds()
         if n is None:
             # no more jobs
-            print("No more jobs. exiting")
+            click.echo("No more jobs. exiting")
             break
         elif n > 0:
             # sleep exactly the right amount of time
-            print("sleeping for:", n)
+            click.echo("sleeping for: {}".format(n))
             time.sleep(n)
         schedule.run_pending()
 
