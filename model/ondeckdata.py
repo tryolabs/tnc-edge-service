@@ -14,7 +14,7 @@ class OndeckData(Base):
     datetime = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
     overallcount = Column(Integer)
     overallruntimems = Column(REAL)
-    tracked_mean_confidence = Column(REAL)
+    tracked_confidence = Column(REAL)
 
     def __str__(self) -> str:
          return 'OndeckData(' + ', '.join(

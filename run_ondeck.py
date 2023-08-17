@@ -88,7 +88,7 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalo
                 o: dict = json.load(f)
                 cnt = o.get('overallCount')
                 runtime = o.get('overallRuntimeMs')
-                frames = o.get('frames', default=[])
+                frames = o.get('frames', [])
                 trackedframes = filter(lambda frame: len(frame.get('trackingIds'))>0, frames)
                 confidencesarrs = map(lambda frame: frame.get('confidence'), trackedframes)
                 confidences = [c for confidencesarr in confidencesarrs for c in confidencesarr]
@@ -96,7 +96,7 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalo
 
                 with sessionmaker() as session:
                     session.execute(sa.text("insert into ondeckdata ( video_uri, cocoannotations_uri, \
-                                            overallcount, overallruntimems, tracked_mean_confidence ) \
+                                            overallcount, overallruntimems, tracked_confidence ) \
                                 values ( :decrypted_path, :json_out_file , :cnt, :runt, :mean_c) ;"), {
                                     "decrypted_path": str(decrypted_path.absolute()),
                                     "json_out_file":str(json_out_file.absolute()),
