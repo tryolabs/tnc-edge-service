@@ -84,28 +84,7 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalo
         p: CompletedProcess[str] = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if p.returncode == 0:
 
-            with json_out_file.open() as f:
-                o: dict = json.load(f)
-                cnt = o.get('overallCount')
-                runtime = o.get('overallRuntimeMs')
-                frames = o.get('frames', [])
-                trackedframes = filter(lambda frame: len(frame.get('trackingIds'))>0, frames)
-                confidencesarrs = map(lambda frame: frame.get('confidence'), trackedframes)
-                confidences = [c for confidencesarr in confidencesarrs for c in confidencesarr]
-                meanconf = float(sum(confidences)) / float(len(confidences))
-
-                with sessionmaker() as session:
-                    session.execute(sa.text("insert into ondeckdata ( video_uri, cocoannotations_uri, \
-                                            overallcount, overallruntimems, tracked_confidence ) \
-                                values ( :decrypted_path, :json_out_file , :cnt, :runt, :mean_c) ;"), {
-                                    "decrypted_path": str(decrypted_path.absolute()),
-                                    "json_out_file":str(json_out_file.absolute()),
-                                    "cnt":cnt, 
-                                    "runt":runtime, 
-                                    "mean_c":meanconf,
-                            }
-                    )
-                    session.commit()
+            parse_json(sessionmaker, decrypted_path, json_out_file)
         else:
             # print("ondeck model failure. stdout, stderr:", p.stdout, p.stderr)
             with sessionmaker() as session:
@@ -119,6 +98,56 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalo
         with sessionmaker() as session:
             video_files = next_videos(session, thalos_cam_name)
 
+def parse_json(sessionmaker, decrypted_path, json_out_file):
+    with json_out_file.open() as f:
+        o: dict = json.load(f)
+        cnt = o.get('overallCount')
+        runtime = o.get('overallRuntimeMs')
+        frames = o.get('frames', [])
+
+                ## stats
+        trackedframes = filter(lambda frame: len(frame.get('trackingIds'))>0, frames)
+        confidencesarrs = map(lambda frame: frame.get('confidence'), trackedframes)
+        confidences = [c for confidencesarr in confidencesarrs for c in confidencesarr]
+        if len(confidences) > 0:
+            meanconf = float(sum(confidences)) / float(len(confidences))
+        else:
+            meanconf = 0
+
+                ## tracks
+        tracks = {}
+        for f in frames:
+            frame_confidences = f.get('confidence')
+            i = 0
+            for trackid in f.get('trackingIds'):
+                if trackid not in tracks:
+                    t = {
+                                "first_frame": f.get('frameNum'),
+                                "first_timestamp": f.get('timestamp'),
+                                "confidences": []
+                            }
+                    tracks[trackid] = t
+                t = tracks[trackid]
+                if len(frame_confidences) > i:
+                    t['confidences'].append(frame_confidences[i])
+                else:
+                    t['confidences'].append(0)
+                i += 1
+                        
+
+        with sessionmaker() as session:
+            session.execute(sa.text("insert into ondeckdata ( video_uri, cocoannotations_uri, \
+                                            overallcount, overallruntimems, tracked_confidence ) \
+                                values ( :decrypted_path, :json_out_file , :cnt, :runt, :mean_c) ;"), {
+                                    "decrypted_path": str(decrypted_path.absolute()),
+                                    "json_out_file":str(json_out_file.absolute()),
+                                    "cnt":cnt, 
+                                    "runt":runtime, 
+                                    "mean_c":meanconf,
+                            }
+                    )
+            session.commit()
+
 
 @click.command()
 @click.option('--dbname', default=flaskconfig.get('DBNAME'))
@@ -127,7 +156,9 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalo
 @click.option('--engine', default=flaskconfig.get('ONDECK_MODEL_ENGINE'))
 @click.option('--thalos_cam_name', default=flaskconfig.get('THALOS_CAM_NAME'))
 @click.option('--print_queue', is_flag=True)
-def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue):
+@click.option('--parsetesta')
+@click.option('--parsetestb')
+def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parsetesta, parsetestb):
 
     output_dir = Path(output_dir)
 
@@ -139,6 +170,10 @@ def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue):
     sessionmaker = SessionMaker(sa_engine)
 
     ModelBase.metadata.create_all(sa_engine)
+
+    if parsetesta and parsetestb:
+        parse_json(sessionmaker, Path(parsetesta), Path(parsetestb))
+        return
 
     if print_queue:
         with sessionmaker() as session:

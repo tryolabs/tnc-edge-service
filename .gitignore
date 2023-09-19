@@ -8,3 +8,6 @@ db.db
 /config/manudo.py
 /config/stpatrick.py
 secret*
+/videos/
+/ondeck/
+

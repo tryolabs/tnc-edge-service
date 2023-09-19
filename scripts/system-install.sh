@@ -51,6 +51,7 @@ if ! which rsync ; then sudo apt -y install rsync ; fi
 if ! which tmux ; then sudo apt -y install tmux ; fi
 if ! which parallel ; then sudo apt -y install parallel ; fi
 if ! which par2 ; then sudo apt -y install par2 ; fi
+if ! which nmap ; then sudo apt -y install nmap ; fi
 
 WRITE_RTC_UDEV_RULE=0
 
