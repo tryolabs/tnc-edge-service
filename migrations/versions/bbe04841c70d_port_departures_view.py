@@ -30,8 +30,18 @@ with A as (
     from gpsdata cross join port_location )
 select B.gps_datetime as datetime, B.lat, B.lon from A join A B on a.row_number = b.row_number-1
 where a.at_port = true and b.at_port = false);""")
+                          
+    op.get_bind().execute("""CREATE OR REPLACE VIEW port_arrivals as (
+with A as (
+    select *,
+    ( point(lat, lon) <-> port_location.port_location ) < 0.3 at_port,
+    row_number() over (order by gps_datetime)
+    from gpsdata cross join port_location )
+select B.gps_datetime as datetime, B.lat, B.lon from A join A B on a.row_number = b.row_number-1
+where a.at_port = false and b.at_port = true);""")
 
 
 def downgrade() -> None:
+    op.get_bind().execute('drop view port_arrivals;')
     op.get_bind().execute('drop view port_departures;')
     op.get_bind().execute('drop table port_location;')
