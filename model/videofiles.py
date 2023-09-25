@@ -13,6 +13,10 @@ class VideoFile(Base):
     decrypted_datetime = Column(DateTime(timezone=True), autoincrement=False, nullable=True)
     stdout = Column(VARCHAR(), autoincrement=False, nullable=True)
     stderr = Column(VARCHAR(), autoincrement=False, nullable=True)
+    reencoded_path = Column(VARCHAR(), autoincrement=False, nullable=True)
+    reencoded_datetime = Column(DateTime(timezone=True), autoincrement=False, nullable=True)
+    reencoded_stdout = Column(VARCHAR(), autoincrement=False, nullable=True)
+    reencoded_stderr = Column(VARCHAR(), autoincrement=False, nullable=True)
     cam_name = Column(VARCHAR(), nullable=True)
     
     # ondeckdata = relationship("OndeckData", back_populates="video_file")
@@ -27,5 +31,9 @@ class VideoFile(Base):
                 "decrypted_datetime",
                 "stdout",
                 "stderr",
+                "reencoded_path",
+                "reencoded_datetime",
+                "reencoded_stdout",
+                "reencoded_stderr",
                 "cam_name",
             ]]) + ')'

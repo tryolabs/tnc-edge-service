@@ -487,6 +487,11 @@ if ! [ -d "/videos" ] ; then
   sudo chmod go+rwx /videos
 fi
 
+if ! [ -d "/usbdrive" ] ; then
+  sudo mkdir /usbdrive
+  sudo chmod go+rwx /usbdrive
+fi
+
 if ! [ -e "/etc/systemd/system/thalos.mount" ] ; then
   cat > ./thalos.mount << EOF
 [Unit]
