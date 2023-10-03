@@ -52,6 +52,7 @@ if ! which tmux ; then sudo apt -y install tmux ; fi
 if ! which parallel ; then sudo apt -y install parallel ; fi
 if ! which par2 ; then sudo apt -y install par2 ; fi
 if ! which nmap ; then sudo apt -y install nmap ; fi
+if ! which at ; then sudo apt -y install at ; fi
 
 WRITE_RTC_UDEV_RULE=0
 
@@ -685,3 +686,43 @@ elif ! sudo diff $TMP_FILE /etc/systemd/system/s3_uploader.service >/dev/null; t
   sudo systemctl restart "s3_uploader.service"
 fi
 rm $TMP_FILE
+
+
+
+
+TMP_FILE="$(mktemp)"
+cat > $TMP_FILE << EOF
+[Unit]
+Description=Reencoding Videos TNC
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+User=$USERNAME
+Group=$USERNAME
+WorkingDirectory=$USERHOME/tnc-edge-service
+Environment=ENVIRONMENT=$ENVIRONMENT
+ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 reencode.py
+Restart=always
+RestartSec=300
+
+[Install]
+WantedBy=default.target
+
+EOF
+
+if ! [ -e "/etc/systemd/system/reencode_video_tnc.service" ] ; then
+  sudo cp $TMP_FILE /etc/systemd/system/reencode_video_tnc.service
+
+  sudo systemctl daemon-reload 
+  sudo systemctl enable "reencode_video_tnc.service"
+  sudo systemctl start "reencode_video_tnc.service"
+
+elif ! sudo diff $TMP_FILE /etc/systemd/system/reencode_video_tnc.service >/dev/null; then
+  sudo cp $TMP_FILE /etc/systemd/system/reencode_video_tnc.service
+
+  sudo systemctl daemon-reload 
+  sudo systemctl restart "reencode_video_tnc.service"
+fi
+rm $TMP_FILE
+
