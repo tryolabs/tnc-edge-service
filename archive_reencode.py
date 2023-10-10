@@ -57,7 +57,7 @@ def next_videos(session: Session):
         l = list(results)
         if len(l):
             return l
-
+            
 
 def run_reencode(output_dir: Path, sessionmaker: SessionMaker):
     
@@ -123,11 +123,16 @@ def run_reencode(output_dir: Path, sessionmaker: SessionMaker):
 @click.option('--dbuser', default=flaskconfig.get('DBUSER'))
 @click.option('--output_dir', default=flaskconfig.get('VIDEO_OUTPUT_DIR'))
 @click.option('--print_queue', is_flag=True)
-def main(dbname, dbuser, output_dir, print_queue):
+@click.option('--input_file', default=None)
+def main(dbname, dbuser, output_dir, print_queue, input_file: str):
 
     output_dir = Path(output_dir)
 
-
+    if input_file != None:
+        i = Path(input_file)
+        with i.open() as f:
+            for l in f.readlines():
+                vids.append(l.strip())
 
     sa_engine = sa.create_engine("postgresql+psycopg2://%s@/%s"%(dbuser, dbname), echo=True)
     sessionmaker = SessionMaker(sa_engine)

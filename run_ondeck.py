@@ -1,9 +1,12 @@
 
+from datetime import datetime, timezone
 import click
 import json
 import os
 from pathlib import Path
 import re
+import requests
+from requests import Response
 import schedule
 import subprocess
 from subprocess import CompletedProcess
@@ -55,6 +58,7 @@ def next_videos(session: Session, thalos_cam_name):
          })
      return list(results)
 
+MAGIC_VALUE_5_MiB = 5 * 1024 * 1024
 
 def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalos_cam_name):
     
@@ -63,21 +67,30 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalo
     with sessionmaker() as session:
         video_files = next_videos(session, thalos_cam_name)
 
-    # print(video_files)
+    # click.echo(video_files)
     while len(video_files) > 0:
         video_file: VideoFile = video_files.pop(0)
-        # print(video_file)
+        # click.echo(video_file)
         decrypted_path = Path(video_file.decrypted_path)
         last_dot_index: int = decrypted_path.name.index('.')
         if last_dot_index < 0:
             last_dot_index = None
         json_out_file: Path = output_dir / Path(decrypted_path.name[0:last_dot_index] + "_ondeck.json")
+
+        ondeck_input = str(decrypted_path.absolute())
+        try:
+            reencoded_path: Path = Path(video_file.reencoded_path)
+            if reencoded_path.stat().st_size > MAGIC_VALUE_5_MiB:
+                ondeck_input = str(reencoded_path.absolute())
+        except:
+            pass
+
         # sudo /usr/bin/docker run --rm -v /videos:/videos --runtime=nvidia --network none gcr.io/edge-gcr/edge-service-image:latest --output /videos --input /videos/21-07-2023-09-55.avi
         cmd: str = "sudo /usr/bin/docker run --rm -v /videos:/videos --runtime=nvidia --network none \
                 gcr.io/edge-gcr/edge-service-image:latest \
                 --output %s --input %s"%(
             str(json_out_file.absolute()), 
-            str(decrypted_path.absolute())
+            ondeck_input
             )
         if engine:
             cmd += " --model %s"%( str(engine.absolute()), )
@@ -86,7 +99,7 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalo
 
             parse_json(sessionmaker, decrypted_path, json_out_file)
         else:
-            # print("ondeck model failure. stdout, stderr:", p.stdout, p.stderr)
+            # click.echo("ondeck model failure. stdout, stderr: {} {}".format( p.stdout, p.stderr))
             with sessionmaker() as session:
                 session.execute(sa.text("insert into ondeckdata ( video_uri, cocoannotations_uri ) \
                             values ( :decrypted_path, :error_str ) ;"), {
@@ -149,6 +162,101 @@ def parse_json(sessionmaker, decrypted_path, json_out_file):
             session.commit()
 
 
+def v2_enqueue(output_dir: Path, sessionmaker: SessionMaker, thalos_cam_name: str):
+    
+    video_files: list[VideoFile] = []
+
+    with sessionmaker() as session:
+        video_files = next_videos(session, thalos_cam_name)
+
+        # print(video_files)
+        while len(video_files) > 0:
+            video_file: VideoFile = video_files.pop(0)
+            # print(video_file)
+            decrypted_path = Path(video_file.decrypted_path)
+            last_dot_index: int = decrypted_path.name.index('.')
+            if last_dot_index < 0:
+                last_dot_index = None
+            json_out_file: Path = output_dir / Path(decrypted_path.name[0:last_dot_index] + "_ondeck.json")
+
+            ondeck_input = str(decrypted_path.absolute())
+            try:
+                reencoded_path: Path = Path(video_file.reencoded_path)
+                if reencoded_path.stat().st_size > MAGIC_VALUE_5_MiB:
+                    ondeck_input = str(reencoded_path.absolute())
+            except:
+                pass
+
+            try:
+                r: Response = requests.post('http://127.0.0.1:5000/inference', json={
+                    "input_path":ondeck_input, 
+                    "output_path":str(json_out_file.absolute()),
+                    "current_timestamp": video_file.start_datetime.astimezone(timezone.utc).replace(tzinfo=None).isoformat() +  ".00Z"
+                })
+
+                click.echo("resp: {} body: {}".format(repr(r), repr(r.json())))
+
+                with sessionmaker() as session:
+                    session.execute(sa.text("""insert into ondeckdata ( video_uri, cocoannotations_uri, status )
+                                values ( :ondeck_input, :ondeck_output, :status )
+                                on conflict DO UPDATE SET status = :status ;"""), {
+                                    "ondeck_input": ondeck_input,
+                                    "ondeck_output": str(json_out_file.absolute()),
+                                    "status": "queued"
+                            }
+                    )
+                    session.commit()
+            except requests.exceptions.RequestException as e:
+                click.echo("ondeck model request exception: {}".format(e))
+                return
+
+MAGIC_VALUE_1_MINUTE = 60
+
+def v2_parse(output_dir: Path, sessionmaker: SessionMaker):
+    # only pick files that end with _ondeck.json
+    a = filter(lambda x: x.is_file() and x.name.endswith('_ondeck.json'), output_dir.iterdir())
+
+    epoch_now = int(time.time())
+    # only pick files that haven't been modified in the last minute
+    b = filter(lambda x: x.stat().st_mtime + MAGIC_VALUE_1_MINUTE < epoch_now, a)
+
+    # get the filenames
+    c = map(lambda x: str(x.absolute()) , b)
+
+    found_ondeck_files = list(c)
+
+    with sessionmaker() as session:
+        results: Query[OndeckData] = session.query(OndeckData).where(OndeckData.status == 'queued')
+        for pending_ondeckdata in results:
+            if pending_ondeckdata.video_uri in found_ondeck_files:
+                pending_ondeckdata.status = "parsing"
+                session.commit()
+                
+
+
+def v2_errors(sessionmaker: SessionMaker):
+    try:
+        r: Response = requests.get('http://127.0.0.1:5000/errors')
+
+        click.echo("errors resp: {} body: {}".format(repr(r), repr(r.json())))
+
+        for error in r:
+            input_path = r.get('input_path')
+            error_message = r.get('error_message')
+
+            with sessionmaker() as session:
+                session.execute(sa.text("insert into ondeckdata ( video_uri, cocoannotations_uri ) \
+                            values ( :decrypted_path, :error_str ) ;"), {
+                                "decrypted_path": input_path,
+                                "error_str": "ondeck model failure. stdout, stderr: " + error_message
+                        }
+                )
+                session.commit()
+
+    except requests.exceptions.RequestException as e:
+        click.echo("ondeck model errors request exception: {}".format(e))
+        return
+
 @click.command()
 @click.option('--dbname', default=flaskconfig.get('DBNAME'))
 @click.option('--dbuser', default=flaskconfig.get('DBUSER'))
@@ -158,7 +266,8 @@ def parse_json(sessionmaker, decrypted_path, json_out_file):
 @click.option('--print_queue', is_flag=True)
 @click.option('--parsetesta')
 @click.option('--parsetestb')
-def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parsetesta, parsetestb):
+@click.option('--force_v2', is_flag=True)
+def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parsetesta, parsetestb, force_v2: bool):
 
     output_dir = Path(output_dir)
 
@@ -179,16 +288,35 @@ def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parse
         with sessionmaker() as session:
             video_files = next_videos(session, thalos_cam_name)
             for v in video_files:
-                print(v.decrypted_path)
+                click.echo(v.decrypted_path)
         return
 
-    def runonce(output_dir, engine, sessionmaker, thalos_cam_name):
-        run_ondeck(output_dir, engine, sessionmaker, thalos_cam_name)
-        return schedule.CancelJob
-    
-    schedule.every(1).seconds.do(runonce, output_dir, engine, sessionmaker, thalos_cam_name)
+    use_v2 = False
+    try:
+        r: Response = requests.get('http://127.0.0.1:5000/queueSummary')
+        use_v2 = r.status_code == 200
+        click.echo("resp: {} body: {}".format(repr(r), repr(r.json())))
+    except requests.exceptions.RequestException as e:
+        click.echo("ondeck model request exception: {}".format(e))
 
-    schedule.every(5).minutes.do(run_ondeck, output_dir, engine, sessionmaker, thalos_cam_name )
+    if force_v2 or use_v2:
+        
+        def runonce(output_dir, sessionmaker, thalos_cam_name):
+            v2_enqueue(output_dir, sessionmaker, thalos_cam_name)
+            return schedule.CancelJob
+        
+        schedule.every(1).seconds.do(runonce, output_dir, sessionmaker, thalos_cam_name)
+
+        schedule.every(5).minutes.do(v2_enqueue, output_dir, sessionmaker, thalos_cam_name )
+    else:
+
+        def runonce(output_dir, engine, sessionmaker, thalos_cam_name):
+            run_ondeck(output_dir, engine, sessionmaker, thalos_cam_name)
+            return schedule.CancelJob
+        
+        schedule.every(1).seconds.do(runonce, output_dir, engine, sessionmaker, thalos_cam_name)
+
+        schedule.every(5).minutes.do(run_ondeck, output_dir, engine, sessionmaker, thalos_cam_name )
 
     while 1:
         n = schedule.idle_seconds()
@@ -197,7 +325,7 @@ def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parse
             break
         elif n > 0:
             # sleep exactly the right amount of time
-            print("sleeping for:", n)
+            click.echo("sleeping for: {}".format(n))
             time.sleep(n)
         schedule.run_pending()
 

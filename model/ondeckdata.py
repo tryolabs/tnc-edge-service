@@ -15,13 +15,20 @@ class OndeckData(Base):
     overallcount = Column(Integer)
     overallruntimems = Column(REAL)
     tracked_confidence = Column(REAL)
+    status = Column(String)
 
     def __str__(self) -> str:
          return 'OndeckData(' + ', '.join(
             [n + '='+ str(self.__getattribute__(n)) for n in [
                 'id',
                 'video_uri',
+                'video_file',
                 'cocoannotations_uri',
                 'datetime',
+                'overallcount',
+                'overallruntimems',
+                'tracked_confidence',
+                'status',
+                
             ]]) + ')'
 

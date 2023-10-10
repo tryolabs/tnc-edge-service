@@ -31,6 +31,9 @@ while (( "$#" )); do
       --do-copy-numpy)
         DO_COPY_PY_PANDAS_TO_VENV="y"
         ;;
+      --do-ondeck)
+        DO_ONDECK="y"
+        ;;
       *)
           help
           ;;
@@ -725,4 +728,45 @@ elif ! sudo diff $TMP_FILE /etc/systemd/system/reencode_video_tnc.service >/dev/
   sudo systemctl restart "reencode_video_tnc.service"
 fi
 rm $TMP_FILE
+
+
+
+if [ $DO_ONDECK ] ; then
+
+  TMP_FILE="$(mktemp)"
+  cat > $TMP_FILE << EOF
+[Unit]
+Description=Ondeck Model Container
+After=docker.service
+Requires=docker.service
+StartLimitIntervalSec=0
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+RestartSec=120
+ExecStartPre=-/usr/bin/docker stop ondeck_model
+ExecStartPre=-/usr/bin/docker rm ondeck_model
+ExecStart=/usr/bin/docker run --rm --name ondeck_model -p 5000:5000 --runtime nvidia -v /videos:/videos -e APP_CONTAINER_DIR=/videos edge-service-image:latest
+ExecStartPost=-/usr/bin/docker exec -it ondeck_model sed -i'' -e 's#            format_str = "%Y-%m-%dT%H:%M:%S.%f%z"#            format_str = "%Y-%m-%dT%H:%M:%S.%f%Z"#' /app/app/workers/worker.py
+
+[Install]
+WantedBy=default.target
+EOF
+
+  if ! [ -e "/etc/systemd/system/ondeck_model.service" ] ; then
+    sudo cp $TMP_FILE /etc/systemd/system/ondeck_model.service
+
+    sudo systemctl daemon-reload 
+    sudo systemctl enable "ondeck_model.service"
+    sudo systemctl start "ondeck_model.service"
+
+  elif ! sudo diff $TMP_FILE /etc/systemd/system/ondeck_model.service >/dev/null; then
+    sudo cp $TMP_FILE /etc/systemd/system/ondeck_model.service
+
+    sudo systemctl daemon-reload 
+    sudo systemctl restart "ondeck_model.service"
+  fi
+  rm $TMP_FILE
+fi
 
