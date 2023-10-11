@@ -97,7 +97,8 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalo
         p: CompletedProcess[str] = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if p.returncode == 0:
 
-            parse_json(sessionmaker, decrypted_path, json_out_file)
+            with sessionmaker() as session:
+                parse_json(session, decrypted_path, json_out_file)
         else:
             # click.echo("ondeck model failure. stdout, stderr: {} {}".format( p.stdout, p.stderr))
             with sessionmaker() as session:
@@ -111,11 +112,13 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalo
         with sessionmaker() as session:
             video_files = next_videos(session, thalos_cam_name)
 
-def parse_json(sessionmaker, decrypted_path, json_out_file):
+def parse_json(session, decrypted_path, json_out_file):
     with json_out_file.open() as f:
         o: dict = json.load(f)
         cnt = o.get('overallCount')
-        runtime = o.get('overallRuntimeMs')
+        ctchs = o.get('overallCatches')
+        discs = o.get('overallDiscards')
+        runtime = o.get('overallRuntimeSeconds')
         frames = o.get('frames', [])
 
                 ## stats
@@ -148,26 +151,56 @@ def parse_json(sessionmaker, decrypted_path, json_out_file):
                 i += 1
                         
 
-        with sessionmaker() as session:
-            session.execute(sa.text("insert into ondeckdata ( video_uri, cocoannotations_uri, \
-                                            overallcount, overallruntimems, tracked_confidence ) \
-                                values ( :decrypted_path, :json_out_file , :cnt, :runt, :mean_c) ;"), {
-                                    "decrypted_path": str(decrypted_path.absolute()),
-                                    "json_out_file":str(json_out_file.absolute()),
-                                    "cnt":cnt, 
-                                    "runt":runtime, 
-                                    "mean_c":meanconf,
-                            }
-                    )
-            session.commit()
+        # with sessionmaker() as session:
+        session.execute(sa.text("""insert into ondeckdata ( video_uri, cocoannotations_uri, 
+                                        overallcount, overallruntimems, tracked_confidence ) 
+                            values ( :decrypted_path, :json_out_file , :cnt, :runt, :mean_c) 
+                            on conflict (video_uri) do update set 
+                            cocoannotations_uri = :json_out_file,
+                            overallcount = :cnt,
+                            overallruntimems = :runt,
+                            tracked_confidence = :mean_c
+                            ;"""), {
+                                "decrypted_path": str(decrypted_path.absolute()),
+                                "json_out_file":str(json_out_file.absolute()),
+                                "cnt":cnt, 
+                                "runt":runtime, 
+                                "mean_c":meanconf,
+                        }
+                )
+        session.commit()
 
+
+
+def v2_next_videos(session: Session, thalos_cam_name):
+     workday_start_hour_at_utc_interval = '8 hours';
+     workday_start_hour_at_utc_timestr = '08:00Z';
+     num_vids_required = 4;
+     results: Query[VideoFile] = session.query(VideoFile).from_statement(sa.text(
+        """
+        select video_files.* from video_files 
+        left join ondeckdata 
+        on video_files.decrypted_path = ondeckdata.video_uri 
+        where video_files.decrypted_path is not null 
+        and video_files.start_datetime is not null
+        and ondeckdata.video_uri is null
+        and video_files.cam_name = :cam_name
+        order by video_files.start_datetime asc;
+        """)).params(
+         {
+             "timei": workday_start_hour_at_utc_interval,
+             "times": workday_start_hour_at_utc_timestr,
+             "numvids": num_vids_required,
+             "cam_name": thalos_cam_name,
+         })
+     return list(results)
 
 def v2_enqueue(output_dir: Path, sessionmaker: SessionMaker, thalos_cam_name: str):
     
     video_files: list[VideoFile] = []
 
     with sessionmaker() as session:
-        video_files = next_videos(session, thalos_cam_name)
+        video_files = v2_next_videos(session, thalos_cam_name)
 
         # print(video_files)
         while len(video_files) > 0:
@@ -180,12 +213,12 @@ def v2_enqueue(output_dir: Path, sessionmaker: SessionMaker, thalos_cam_name: st
             json_out_file: Path = output_dir / Path(decrypted_path.name[0:last_dot_index] + "_ondeck.json")
 
             ondeck_input = str(decrypted_path.absolute())
-            try:
-                reencoded_path: Path = Path(video_file.reencoded_path)
-                if reencoded_path.stat().st_size > MAGIC_VALUE_5_MiB:
-                    ondeck_input = str(reencoded_path.absolute())
-            except:
-                pass
+            # try:
+            #     reencoded_path: Path = Path(video_file.reencoded_path)
+            #     if reencoded_path.stat().st_size > MAGIC_VALUE_5_MiB:
+            #         ondeck_input = str(reencoded_path.absolute())
+            # except:
+            #     pass
 
             try:
                 r: Response = requests.post('http://127.0.0.1:5000/inference', json={
@@ -199,7 +232,7 @@ def v2_enqueue(output_dir: Path, sessionmaker: SessionMaker, thalos_cam_name: st
                 with sessionmaker() as session:
                     session.execute(sa.text("""insert into ondeckdata ( video_uri, cocoannotations_uri, status )
                                 values ( :ondeck_input, :ondeck_output, :status )
-                                on conflict DO UPDATE SET status = :status ;"""), {
+                                on conflict (video_uri) DO UPDATE SET status = :status ;"""), {
                                     "ondeck_input": ondeck_input,
                                     "ondeck_output": str(json_out_file.absolute()),
                                     "status": "queued"
@@ -225,12 +258,21 @@ def v2_parse(output_dir: Path, sessionmaker: SessionMaker):
 
     found_ondeck_files = list(c)
 
+    click.echo("found {} _ondeck.json files".format(str(len(found_ondeck_files))))
+
     with sessionmaker() as session:
         results: Query[OndeckData] = session.query(OndeckData).where(OndeckData.status == 'queued')
         for pending_ondeckdata in results:
-            if pending_ondeckdata.video_uri in found_ondeck_files:
+            # click.echo("found {} queued row".format(str(pending_ondeckdata)))
+            if pending_ondeckdata.cocoannotations_uri in found_ondeck_files:
                 pending_ondeckdata.status = "parsing"
                 session.commit()
+        
+                parse_json(session, Path(pending_ondeckdata.video_uri), Path(pending_ondeckdata.cocoannotations_uri))
+
+                pending_ondeckdata.status = "done"
+                session.commit()
+
                 
 
 
@@ -240,13 +282,16 @@ def v2_errors(sessionmaker: SessionMaker):
 
         click.echo("errors resp: {} body: {}".format(repr(r), repr(r.json())))
 
-        for error in r:
-            input_path = r.get('input_path')
-            error_message = r.get('error_message')
+        for error in r.json():
+            input_path = error.get('input_path')
+            error_message = error.get('error_message')
 
             with sessionmaker() as session:
-                session.execute(sa.text("insert into ondeckdata ( video_uri, cocoannotations_uri ) \
-                            values ( :decrypted_path, :error_str ) ;"), {
+                session.execute(sa.text("""insert into ondeckdata ( video_uri, cocoannotations_uri ) 
+                            values ( :decrypted_path, :error_str ) 
+                            on conflict (video_uri) do update set 
+                            status = 'errored', cocoannotations_uri = :error_str
+                            ;"""), {
                                 "decrypted_path": input_path,
                                 "error_str": "ondeck model failure. stdout, stderr: " + error_message
                         }
@@ -301,13 +346,29 @@ def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parse
 
     if force_v2 or use_v2:
         
-        def runonce(output_dir, sessionmaker, thalos_cam_name):
+        def runonce_enqueue(output_dir, sessionmaker, thalos_cam_name):
             v2_enqueue(output_dir, sessionmaker, thalos_cam_name)
             return schedule.CancelJob
         
-        schedule.every(1).seconds.do(runonce, output_dir, sessionmaker, thalos_cam_name)
+        schedule.every(1).seconds.do(runonce_enqueue, output_dir, sessionmaker, thalos_cam_name)
 
         schedule.every(5).minutes.do(v2_enqueue, output_dir, sessionmaker, thalos_cam_name )
+
+        def runonce_errors(sessionmaker):
+            v2_errors(sessionmaker)
+            return schedule.CancelJob
+        
+        schedule.every(1).seconds.do(runonce_errors, sessionmaker) 
+
+        schedule.every(1).minutes.do(v2_errors, sessionmaker)
+
+        def runonce_parse(output_dir, sessionmaker):
+            v2_parse(output_dir, sessionmaker)
+            return schedule.CancelJob
+        
+        schedule.every(1).seconds.do(runonce_parse, output_dir, sessionmaker)
+
+        schedule.every(1).minutes.do(v2_parse, output_dir, sessionmaker )
     else:
 
         def runonce(output_dir, engine, sessionmaker, thalos_cam_name):

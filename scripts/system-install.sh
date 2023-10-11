@@ -19,7 +19,7 @@ if [ "x$ENVIRONMENT" == "x" ] || ! [ -e "$ENVIRONMENT" ] ; then
 fi
 
 function help {
-  echo "usage: $SCRIPTNAME  [--do-github] [--do-copy-numpy] "
+  echo "usage: $SCRIPTNAME  [--do-github] [--do-copy-numpy] [--do-ondeck]"
   exit 1
 }
 
