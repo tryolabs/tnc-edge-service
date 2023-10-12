@@ -1,14 +1,14 @@
-
+#!/bin/bash
 
 scriptdir="$(dirname -- "$( readlink -f -- "$0")")"
 
-cd "$scriptdir/.."
+cd "$scriptdir/.." || exit
 
 USERNAME="$(whoami)"
 USERHOME="/home/$USERNAME"
 WORKINGDIR="$USERHOME/tnc-edge-service"
 
-cd "$WORKINGDIR"
+cd "$WORKINGDIR" || exit
 
 
 if ! [ -e ./venv/bin/activate ] ; then

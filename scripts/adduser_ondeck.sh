@@ -31,9 +31,9 @@ if ! [ -e "$USERHOME/.ssh/authorized_keys" ] ; then
   chown ondeck:ondeck "$USERHOME/.ssh/authorized_keys"
 fi
 
-while read k; do
-  if ! grep -q "$k" "$USERHOME/.ssh/authorized_keys" ; then
-    echo "$k" >> "$USERHOME/.ssh/authorized_keys"
+while read -r k; do
+  if ! grep -q "\$k" "$USERHOME/.ssh/authorized_keys" ; then
+    echo "\$k" >> "$USERHOME/.ssh/authorized_keys"
   fi
 done <"$scriptdir/ondeck_authorized_keys.txt"
 
@@ -48,7 +48,7 @@ gapp_creds_config_line=$(sudo grep -E '^export GOOGLE_APPLICATION_CREDENTIALS=' 
 
 if [ $? -eq 0 ] && [ "x$gapp_creds_config_line" != "x" ] ; then
   # eval to make this value available in this script
-  eval $gapp_creds_config_line
+  eval "$gapp_creds_config_line"
 else
 
   # set it up in .bashrc

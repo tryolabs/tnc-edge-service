@@ -1,7 +1,8 @@
+#!/bin/bash
 
 ## WIP - probably working?
 
-scriptdir="$(dirname -- "$( readlink -f -- "$0")")"
+# scriptdir="$(dirname -- "$( readlink -f -- "$0")")"
 
 echo "Before running:"
 echo "  1. ssh into vpn.riskedge.fish"
@@ -15,7 +16,7 @@ function usage {
   echo "    vpn-install.sh <OpenVPN_Config_File.ovpn>"
 }
 
-if [ "x$1" == "x" ] || ! [ -e  "$1" ] ; then
+if [ "$1" == "" ] || ! [ -e  "$1" ] ; then
   echo "no OpenVPN config file"
   echo ""
   usage

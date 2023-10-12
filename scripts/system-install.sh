@@ -1,4 +1,4 @@
-
+#!/bin/bash
 
 SCRIPTNAME="$0"
 scriptdir="$(dirname -- "$( readlink -f -- "$0")")"
@@ -6,14 +6,14 @@ scriptdir="$(dirname -- "$( readlink -f -- "$0")")"
 USERNAME="$(whoami)"
 USERHOME="/home/$USERNAME"
 
-cd "$USERHOME"
+cd "$USERHOME" || exit
 
 if [ "$UID" -lt 1000 ] ; then
   echo "This script should be run as a non-root user with 'sudo' access"
   exit 1
 fi
 
-if [ "x$ENVIRONMENT" == "x" ] || ! [ -e "$ENVIRONMENT" ] ; then
+if [ "$ENVIRONMENT" == "" ] || ! [ -e "$ENVIRONMENT" ] ; then
   echo "No ENVIRONMENT specified. Please add an export ENVIRONMENT line to .bashrc and restart"
   exit 1
 fi
@@ -198,7 +198,7 @@ fi
 
 
 TMP_FILE="$(mktemp)"
-cat > $TMP_FILE << EOF
+cat > "$TMP_FILE" << EOF
 [Unit]
 Description=TNC Edge Service
 After=network.target
@@ -219,18 +219,18 @@ WantedBy=default.target
 EOF
 
 if ! [ -e "/etc/systemd/system/tnc-edge-http.service" ] ; then
-  sudo cp $TMP_FILE /etc/systemd/system/tnc-edge-http.service
+  sudo cp "$TMP_FILE" /etc/systemd/system/tnc-edge-http.service
 
   sudo systemctl daemon-reload 
   sudo systemctl enable "tnc-edge-http.service"
   sudo systemctl start "tnc-edge-http.service"
-elif ! sudo diff $TMP_FILE /etc/systemd/system/tnc-edge-http.service >/dev/null; then
-  sudo cp $TMP_FILE /etc/systemd/system/tnc-edge-http.service
+elif ! sudo diff "$TMP_FILE" /etc/systemd/system/tnc-edge-http.service >/dev/null; then
+  sudo cp "$TMP_FILE" /etc/systemd/system/tnc-edge-http.service
 
   sudo systemctl daemon-reload 
   sudo systemctl restart "tnc-edge-http.service"
 fi
-rm $TMP_FILE
+rm "$TMP_FILE"
 
 
 if ! systemctl status postgresql ; then
@@ -294,7 +294,7 @@ if ! [ -e "$USERHOME/.ssh/authorized_keys" ] ; then
   chmod go-rwx "$USERHOME/.ssh/authorized_keys"
 fi
 
-while read k; do
+while read -r k; do
   if ! grep -q "$k" "$USERHOME/.ssh/authorized_keys" ; then
     echo "$k" >> "$USERHOME/.ssh/authorized_keys"
   fi
@@ -334,6 +334,7 @@ if ! which docker-credential-gcr ; then
 
   VERSION=2.1.8
   OS=linux  # or "darwin" for OSX, "windows" for Windows.
+  # shellcheck disable=SC2268
   if [ "x$(uname -p)" == 'xaarch64' ] ; then
     ARCH="arm64"  # or "386" for 32-bit OSs
   elif [ "x$(uname -p)" == 'xx86_64' ] ; then
@@ -376,11 +377,16 @@ fi
 
 
 if [ -e "$USERHOME/.gnupg/pubring.kbx" ] && [ "x$USERNAME:$USERNAME" != "x$(stat --format '%U:%G' "$USERHOME/.gnupg/pubring.kbx")" ] ; then
-  sudo chown $USERNAME:$USERNAME "$USERHOME/.gnupg/pubring.kbx"
+  sudo chown "$USERNAME":"$USERNAME" "$USERHOME/.gnupg/pubring.kbx"
 fi
 
-
-if ! [ -e /etc/netplan/01_eth0_dhcp.yaml* ] ; then
+FOUND=""
+for file in /etc/netplan/01_eth0_dhcp.yaml* ; do
+  if [ -e "$file" ] ; then
+    FOUND="y"
+  fi
+done
+if ! [ "$FOUND" ] ; then
   cat > ./01_eth0_dhcp.yaml <<EOF
 network:
   version: 2
@@ -393,7 +399,13 @@ EOF
   rm ./01_eth0_dhcp.yaml
 fi
 
-if ! [ -e /etc/netplan/01_eth0_static.yaml* ] ; then
+FOUND=""
+for file in /etc/netplan/01_eth0_static.yaml* ; do
+  if [ -e "$file" ] ; then
+    FOUND="y"
+  fi
+done
+if ! [ "$FOUND" ] ; then
   cat > ./01_eth0_static.yaml <<EOF
 network:
   version: 2
@@ -446,7 +458,7 @@ sudo systemctl disable "netplan-autoswitcher.service"
 
 
 TMP_FILE="$(mktemp)"
-cat > $TMP_FILE << EOF
+cat > "$TMP_FILE" << EOF
 [Unit]
 Description=Thalos Video Auto Decrypt
 After=network.target
@@ -467,19 +479,19 @@ WantedBy=default.target
 EOF
 
 if ! [ -e "/etc/systemd/system/thalos-video-autodecrypt.service" ] ; then
-  sudo cp $TMP_FILE /etc/systemd/system/thalos-video-autodecrypt.service
+  sudo cp "$TMP_FILE" /etc/systemd/system/thalos-video-autodecrypt.service
 
   sudo systemctl daemon-reload 
   sudo systemctl enable "thalos-video-autodecrypt.service"
   sudo systemctl start "thalos-video-autodecrypt.service"
 
-elif ! sudo diff $TMP_FILE /etc/systemd/system/thalos-video-autodecrypt.service >/dev/null; then
-  sudo cp $TMP_FILE /etc/systemd/system/thalos-video-autodecrypt.service
+elif ! sudo diff "$TMP_FILE" /etc/systemd/system/thalos-video-autodecrypt.service >/dev/null; then
+  sudo cp "$TMP_FILE" /etc/systemd/system/thalos-video-autodecrypt.service
 
   sudo systemctl daemon-reload 
   sudo systemctl restart "thalos-video-autodecrypt.service"
 fi
-rm $TMP_FILE
+rm "$TMP_FILE"
 
 if ! [ -d "/thalos" ] ; then
   sudo mkdir /thalos
@@ -572,7 +584,7 @@ fi
 if [ "x$(sudo docker image ls -q gcr.io/edge-gcr/edge-service-image:latest)" != "x" ] ; then
 
   TMP_FILE="$(mktemp)"
-  cat > $TMP_FILE << EOF
+  cat > "$TMP_FILE" << EOF
 [Unit]
 Description=Ondeck Runner
 After=network.target
@@ -583,7 +595,7 @@ User=$USERNAME
 Group=$USERNAME
 WorkingDirectory=$USERHOME/tnc-edge-service
 Environment=ENVIRONMENT=$ENVIRONMENT
-ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 run_ondeck.py
+ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 run_ondeck.py --force_v2
 Restart=always
 RestartSec=30
 
@@ -593,24 +605,24 @@ WantedBy=default.target
 EOF
 
   if ! [ -e "/etc/systemd/system/ondeck-runner.service" ] ; then
-    sudo cp $TMP_FILE /etc/systemd/system/ondeck-runner.service
+    sudo cp "$TMP_FILE" /etc/systemd/system/ondeck-runner.service
 
     sudo systemctl daemon-reload 
     sudo systemctl enable "ondeck-runner.service"
     sudo systemctl start "ondeck-runner.service"
 
-  elif ! sudo diff $TMP_FILE /etc/systemd/system/ondeck-runner.service >/dev/null; then
-    sudo cp $TMP_FILE /etc/systemd/system/ondeck-runner.service
+  elif ! sudo diff "$TMP_FILE" /etc/systemd/system/ondeck-runner.service >/dev/null; then
+    sudo cp "$TMP_FILE" /etc/systemd/system/ondeck-runner.service
 
     sudo systemctl daemon-reload 
     sudo systemctl restart "ondeck-runner.service"
   fi
-  rm $TMP_FILE
+  rm "$TMP_FILE"
 fi
 
 
 TMP_FILE="$(mktemp)"
-cat > $TMP_FILE << EOF
+cat > "$TMP_FILE" << EOF
 [Unit]
 Description=Thalos GPS Auto Import
 After=network.target
@@ -631,31 +643,31 @@ WantedBy=default.target
 EOF
 
 if ! [ -e "/etc/systemd/system/gps_fetch.service" ] ; then
-  sudo cp $TMP_FILE /etc/systemd/system/gps_fetch.service
+  sudo cp "$TMP_FILE" /etc/systemd/system/gps_fetch.service
 
   sudo systemctl daemon-reload 
   sudo systemctl enable "gps_fetch.service"
   sudo systemctl start "gps_fetch.service"
 
-elif ! sudo diff $TMP_FILE /etc/systemd/system/gps_fetch.service >/dev/null; then
-  sudo cp $TMP_FILE /etc/systemd/system/gps_fetch.service
+elif ! sudo diff "$TMP_FILE" /etc/systemd/system/gps_fetch.service >/dev/null; then
+  sudo cp "$TMP_FILE" /etc/systemd/system/gps_fetch.service
 
   sudo systemctl daemon-reload 
   sudo systemctl restart "gps_fetch.service"
 fi
-rm $TMP_FILE
+rm "$TMP_FILE"
 
-if [ $DO_COPY_PY_PANDAS_TO_VENV ] ; then
-  cp -r /usr/lib/python3/dist-packages/pytz* $USERHOME/tnc-edge-service/venv/lib/python3.8/site-packages/
-  cp -r /usr/lib/python3/dist-packages/tzdata* $USERHOME/tnc-edge-service/venv/lib/python3.8/site-packages/
-  cp -r /usr/lib/python3/dist-packages/numpy* $USERHOME/tnc-edge-service/venv/lib/python3.8/site-packages/
-  cp -r /usr/lib/python3/dist-packages/pandas* $USERHOME/tnc-edge-service/venv/lib/python3.8/site-packages/
+if [ "$DO_COPY_PY_PANDAS_TO_VENV" ] ; then
+  cp -r /usr/lib/python3/dist-packages/pytz* "$USERHOME"/tnc-edge-service/venv/lib/python3.8/site-packages/
+  cp -r /usr/lib/python3/dist-packages/tzdata* "$USERHOME"/tnc-edge-service/venv/lib/python3.8/site-packages/
+  cp -r /usr/lib/python3/dist-packages/numpy* "$USERHOME"/tnc-edge-service/venv/lib/python3.8/site-packages/
+  cp -r /usr/lib/python3/dist-packages/pandas* "$USERHOME"/tnc-edge-service/venv/lib/python3.8/site-packages/
 fi
 
 
 
 TMP_FILE="$(mktemp)"
-cat > $TMP_FILE << EOF
+cat > "$TMP_FILE" << EOF
 [Unit]
 Description=S3 Upload Tnc Edge DB
 After=network.target
@@ -676,25 +688,25 @@ WantedBy=default.target
 EOF
 
 if ! [ -e "/etc/systemd/system/s3_uploader.service" ] ; then
-  sudo cp $TMP_FILE /etc/systemd/system/s3_uploader.service
+  sudo cp "$TMP_FILE" /etc/systemd/system/s3_uploader.service
 
   sudo systemctl daemon-reload 
   sudo systemctl enable "s3_uploader.service"
   sudo systemctl start "s3_uploader.service"
 
-elif ! sudo diff $TMP_FILE /etc/systemd/system/s3_uploader.service >/dev/null; then
-  sudo cp $TMP_FILE /etc/systemd/system/s3_uploader.service
+elif ! sudo diff "$TMP_FILE" /etc/systemd/system/s3_uploader.service >/dev/null; then
+  sudo cp "$TMP_FILE" /etc/systemd/system/s3_uploader.service
 
   sudo systemctl daemon-reload 
   sudo systemctl restart "s3_uploader.service"
 fi
-rm $TMP_FILE
+rm "$TMP_FILE"
 
 
 
 
 TMP_FILE="$(mktemp)"
-cat > $TMP_FILE << EOF
+cat > "$TMP_FILE" << EOF
 [Unit]
 Description=Reencoding Videos TNC
 After=network.target
@@ -715,26 +727,26 @@ WantedBy=default.target
 EOF
 
 if ! [ -e "/etc/systemd/system/reencode_video_tnc.service" ] ; then
-  sudo cp $TMP_FILE /etc/systemd/system/reencode_video_tnc.service
+  sudo cp "$TMP_FILE" /etc/systemd/system/reencode_video_tnc.service
 
   sudo systemctl daemon-reload 
   sudo systemctl enable "reencode_video_tnc.service"
   sudo systemctl start "reencode_video_tnc.service"
 
-elif ! sudo diff $TMP_FILE /etc/systemd/system/reencode_video_tnc.service >/dev/null; then
-  sudo cp $TMP_FILE /etc/systemd/system/reencode_video_tnc.service
+elif ! sudo diff "$TMP_FILE" /etc/systemd/system/reencode_video_tnc.service >/dev/null; then
+  sudo cp "$TMP_FILE" /etc/systemd/system/reencode_video_tnc.service
 
   sudo systemctl daemon-reload 
   sudo systemctl restart "reencode_video_tnc.service"
 fi
-rm $TMP_FILE
+rm "$TMP_FILE"
 
 
 
-if [ $DO_ONDECK ] ; then
+if [ "$DO_ONDECK" ] ; then
 
   TMP_FILE="$(mktemp)"
-  cat > $TMP_FILE << EOF
+  cat > "$TMP_FILE" << EOF
 [Unit]
 Description=Ondeck Model Container
 After=docker.service
@@ -755,18 +767,18 @@ WantedBy=default.target
 EOF
 
   if ! [ -e "/etc/systemd/system/ondeck_model.service" ] ; then
-    sudo cp $TMP_FILE /etc/systemd/system/ondeck_model.service
+    sudo cp "$TMP_FILE" /etc/systemd/system/ondeck_model.service
 
     sudo systemctl daemon-reload 
     sudo systemctl enable "ondeck_model.service"
     sudo systemctl start "ondeck_model.service"
 
-  elif ! sudo diff $TMP_FILE /etc/systemd/system/ondeck_model.service >/dev/null; then
-    sudo cp $TMP_FILE /etc/systemd/system/ondeck_model.service
+  elif ! sudo diff "$TMP_FILE" /etc/systemd/system/ondeck_model.service >/dev/null; then
+    sudo cp "$TMP_FILE" /etc/systemd/system/ondeck_model.service
 
     sudo systemctl daemon-reload 
     sudo systemctl restart "ondeck_model.service"
   fi
-  rm $TMP_FILE
+  rm "$TMP_FILE"
 fi
 

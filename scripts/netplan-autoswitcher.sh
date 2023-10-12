@@ -10,12 +10,24 @@ fi
 
 
 
-if ! [ -e /etc/netplan/01_eth0_dhcp.yaml* ] ; then
+FOUND=""
+for file in /etc/netplan/01_eth0_dhcp.yaml* ; do
+  if [ -e "$file" ] ; then
+    FOUND="y"
+  fi
+done
+if ! [ "$FOUND" ] ; then
   echo "could not find /etc/netplan/01_eth0_dhcp.yaml*"
   exit 1
 fi
 
-if ! [ -e /etc/netplan/01_eth0_static.yaml* ] ; then
+FOUND=""
+for file in /etc/netplan/01_eth0_static.yaml* ; do
+  if [ -e "$file" ] ; then
+    FOUND="y"
+  fi
+done
+if ! [ "$FOUND" ] ; then
   echo "could not find /etc/netplan/01_eth0_static.yaml*"
   exit 1
 fi
@@ -51,7 +63,7 @@ elif grep -q "method=auto" /run/NetworkManager/system-connections/netplan-eth0.n
   GATEWAYIP="$(nmcli d show eth0 | grep IP4.GATEWAY | awk '{print $2;}')"
   STATICGWIP="$(grep "via:" /etc/netplan/01_eth0_static.yaml* | awk '{print $2;}')"
   
-  if [ "x$GATEWAYIP" == "x$STATICGWIP" ] ; then
+  if [ "$GATEWAYIP" == "$STATICGWIP" ] ; then
     if ping "$STATICGWIP" -c 3 >/dev/null 2>&1 ; then
       if ping "api.oceanbox2.com" -c 3 >/dev/null 2>&1 ; then
         switch_to_static

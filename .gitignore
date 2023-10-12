@@ -7,6 +7,7 @@ db.db
 /config/brancol.py
 /config/manudo.py
 /config/stpatrick.py
+/config/edge2.py
 secret*
 /videos/
 /ondeck/
