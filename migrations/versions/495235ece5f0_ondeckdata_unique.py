@@ -17,6 +17,17 @@ depends_on = None
 
 
 def upgrade() -> None:
+
+    op.execute("""
+               with duped as (
+                select distinct on (video_uri) video_uri, id 
+                from ondeckdata 
+                order by video_uri, datetime desc
+               ) 
+               delete from ondeckdata 
+               where video_uri in (select video_uri from duped) 
+               and id not in (select id from duped)
+               ;""")
     op.create_unique_constraint(None, 'ondeckdata', ['video_uri'])
     
 

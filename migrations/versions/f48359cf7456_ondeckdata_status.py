@@ -20,6 +20,8 @@ def upgrade() -> None:
     
     op.add_column('ondeckdata', sa.Column('status', sa.String(), nullable=True))
 
+    op.execute("update ondeckdata set status = 'done';")
+
 
 def downgrade() -> None:
     op.drop_column('ondeckdata', 'status')

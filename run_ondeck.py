@@ -112,70 +112,123 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalo
         with sessionmaker() as session:
             video_files = next_videos(session, thalos_cam_name)
 
-def parse_json(session, decrypted_path, json_out_file):
+def parse_json(session: Session, decrypted_path: Path, json_out_file: Path):
     with json_out_file.open() as f:
         o: dict = json.load(f)
-        cnt = o.get('overallCount')
-        ctchs = o.get('overallCatches')
-        discs = o.get('overallDiscards')
-        runtime = o.get('overallRuntimeSeconds')
-        frames = o.get('frames', [])
 
-                ## stats
-        trackedframes = filter(lambda frame: len(frame.get('trackingIds'))>0, frames)
-        confidencesarrs = map(lambda frame: frame.get('confidence'), trackedframes)
-        confidences = [c for confidencesarr in confidencesarrs for c in confidencesarr]
-        if len(confidences) > 0:
-            meanconf = float(sum(confidences)) / float(len(confidences))
-        else:
-            meanconf = 0
+        if 'overallRuntimeMs' in o.keys():
+            v1_parse_json(session, decrypted_path, json_out_file, o)
+        elif 'overallRuntimeSeconds' in o.keys():
+            v2_parse_json(session, decrypted_path, json_out_file, o)
 
-                ## tracks
-        tracks = {}
-        for f in frames:
-            frame_confidences = f.get('confidence')
-            i = 0
-            for trackid in f.get('trackingIds'):
-                if trackid not in tracks:
-                    t = {
-                                "first_frame": f.get('frameNum'),
-                                "first_timestamp": f.get('timestamp'),
-                                "confidences": []
-                            }
-                    tracks[trackid] = t
-                t = tracks[trackid]
-                if len(frame_confidences) > i:
-                    t['confidences'].append(frame_confidences[i])
-                else:
-                    t['confidences'].append(0)
-                i += 1
-                        
+def v1_parse_json(session: Session, decrypted_path: Path, json_out_file: Path, o: dict):
+    cnt = o.get('overallCount')
+    runtime = o.get('overallRuntimeMs')
+    frames = o.get('frames', [])
 
-        # with sessionmaker() as session:
-        session.execute(sa.text("""insert into ondeckdata ( video_uri, cocoannotations_uri, 
-                                        overallcount, overallruntimems, tracked_confidence ) 
-                            values ( :decrypted_path, :json_out_file , :cnt, :runt, :mean_c) 
-                            on conflict (video_uri) do update set 
-                            cocoannotations_uri = :json_out_file,
-                            overallcount = :cnt,
-                            overallruntimems = :runt,
-                            tracked_confidence = :mean_c
-                            ;"""), {
-                                "decrypted_path": str(decrypted_path.absolute()),
-                                "json_out_file":str(json_out_file.absolute()),
-                                "cnt":cnt, 
-                                "runt":runtime, 
-                                "mean_c":meanconf,
+            ## stats
+    trackedframes = filter(lambda frame: len(frame.get('trackingIds'))>0, frames)
+    confidencesarrs = map(lambda frame: frame.get('confidence'), trackedframes)
+    confidences = [c for confidencesarr in confidencesarrs for c in confidencesarr]
+    if len(confidences) > 0:
+        meanconf = float(sum(confidences)) / float(len(confidences))
+    else:
+        meanconf = 0
+
+            ## tracks
+    tracks = {}
+    for f in frames:
+        frame_confidences = f.get('confidence')
+        i = 0
+        for trackid in f.get('trackingIds'):
+            if trackid not in tracks:
+                t = {
+                            "first_frame": f.get('frameNum'),
+                            "first_timestamp": f.get('timestamp'),
+                            "confidences": []
                         }
-                )
-        session.commit()
+                tracks[trackid] = t
+            t = tracks[trackid]
+            if len(frame_confidences) > i:
+                t['confidences'].append(frame_confidences[i])
+            else:
+                t['confidences'].append(0)
+            i += 1
+                    
+
+    # with sessionmaker() as session:
+    session.execute(sa.text("insert into ondeckdata ( video_uri, cocoannotations_uri, \
+                                    overallcount, overallruntimems, tracked_confidence ) \
+                        values ( :decrypted_path, :json_out_file , :cnt, :runt, :mean_c) ;"), {
+                            "decrypted_path": str(decrypted_path.absolute()),
+                            "json_out_file":str(json_out_file.absolute()),
+                            "cnt":cnt, 
+                            "runt":runtime, 
+                            "mean_c":meanconf,
+                    }
+            )
+    session.commit()
 
 
+def v2_parse_json(session: Session, decrypted_path: Path, json_out_file: Path, o: dict):
+    
+    cnt = o.get('overallCount')
+    catches = o.get('overallCatches')
+    discards = o.get('overallDiscards')
+    runtime = o.get('overallRuntimeSeconds')
+    frames = o.get('frames', [])
+
+
+    detectionconfidences = []
+    trackedconfidences = []
+    for frame in frames:
+        detectionconfidences.extend(frame.get('confidence'))
+        
+        idx = 0
+        for trackingId in frame.get('trackingIds'):
+            if trackingId in frame.get('allActiveTrackingIds'):
+                trackedconfidences.append(frame.get('confidence')[idx])
+            idx += 1
+
+    
+    if len(detectionconfidences) > 0:
+        meandetectionconfidence = float(sum(detectionconfidences)) / float(len(detectionconfidences))
+    else:
+        meandetectionconfidence = 0
+
+
+    if len(trackedconfidences) > 0:
+        meantrackedconfidence = float(sum(trackedconfidences)) / float(len(trackedconfidences))
+    else:
+        meantrackedconfidence = 0
+                    
+
+    # with sessionmaker() as session:
+    session.execute(sa.text("""insert into ondeckdata ( video_uri, cocoannotations_uri, 
+                                    overallcount, overallcatches, overalldiscards, overallruntimems, detection_confidence, tracked_confidence ) 
+                        values ( :decrypted_path, :json_out_file , :cnt, :catches, :discards, :runt, :mean_c, :mean_t) 
+                        on conflict (video_uri) do update set 
+                        cocoannotations_uri = :json_out_file,
+                        overallcount = :cnt,
+                        overallruntimems = :runt,
+                        tracked_confidence = :mean_t,
+                        overallcatches = :catches,
+                        overalldiscards = :discards,
+                        detection_confidence = :mean_c
+                        ;"""), {
+                            "decrypted_path": str(decrypted_path.absolute()),
+                            "json_out_file":str(json_out_file.absolute()),
+                            "cnt":cnt, 
+                            "catches":catches, 
+                            "discards":discards,
+                            "runt":runtime, 
+                            "mean_c":meandetectionconfidence,
+                            "mean_t":meantrackedconfidence,
+                    }
+            )
+    session.commit()
 
 def v2_next_videos(session: Session, thalos_cam_name):
-     workday_start_hour_at_utc_interval = '8 hours';
-     workday_start_hour_at_utc_timestr = '08:00Z';
-     num_vids_required = 4;
      results: Query[VideoFile] = session.query(VideoFile).from_statement(sa.text(
         """
         select video_files.* from video_files 
@@ -188,9 +241,6 @@ def v2_next_videos(session: Session, thalos_cam_name):
         order by video_files.start_datetime asc;
         """)).params(
          {
-             "timei": workday_start_hour_at_utc_interval,
-             "times": workday_start_hour_at_utc_timestr,
-             "numvids": num_vids_required,
              "cam_name": thalos_cam_name,
          })
      return list(results)

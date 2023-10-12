@@ -16,6 +16,9 @@ class OndeckData(Base):
     overallruntimems = Column(REAL)
     tracked_confidence = Column(REAL)
     status = Column(String)
+    overallcatches  = Column(Integer)
+    overalldiscards  = Column(Integer)
+    detection_confidence = Column(REAL)
 
     def __str__(self) -> str:
          return 'OndeckData(' + ', '.join(
