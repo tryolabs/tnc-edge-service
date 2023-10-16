@@ -35,7 +35,10 @@ class RunOndeckVector():
 
 
 
-    def execute(self, datetime_from, datetime_to):
+    def execute(self, expected_timedelta: timedelta):
+
+        datetime_to = datetime.now()
+        datetime_from = datetime_to - expected_timedelta
 
         fishAiDatas = self.session.query(FishAiData).filter(FishAiData.datetime > datetime_from).filter(FishAiData.datetime < datetime_to)
 

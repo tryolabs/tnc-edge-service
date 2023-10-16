@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker, Session
 import os
 
 from model import Base as ModelBase, RiskVector, RiskVectorModelView, Test, TestModelView
-from vector import GpsVector, FishAiEventsComeInFourHourBurstsVector, InternetVector, EquipmentOutageAggVector
+from vector import GpsVector, FishAiEventsComeInFourHourBurstsVector, InternetVector, EquipmentOutageAggVector, ThalosMountVector
 
 import sqlite3
 from datetime import datetime, timedelta, timezone
@@ -35,37 +35,37 @@ s3 = boto3.resource('s3')
 bucket = s3.Bucket('51-gema-dev-dp-raw')
 
 
-def parse_and_schedule(vector, execute_func, *args):
+def parse_and_schedule(vector: RiskVector, execute_func, *args):
 
     if not vector.schedule_string:
         return
 
-    if m := re.match('every (\d+) minutes', vector.schedule_string ):
+    if m := re.match('every (\\d+) minutes', vector.schedule_string ):
         
         d = timedelta(minutes=int(m.group(1)))
         schedule.every(int(m.group(1))).minutes.do(execute_func, d, *args)
 
-    elif m := re.match('every (\d+) hours', vector.schedule_string ):
+    elif m := re.match('every (\\d+) hours', vector.schedule_string ):
         
         d = timedelta(hours=int(m.group(1)))
         schedule.every(int(m.group(1))).hours.do(execute_func, d, *args)
+    else:
+        click.echo("VECTOR NOT SCHEDULED: {}".format(vector.name))
         
 
 
 @click.command()
 @click.option('--dbname', default=flaskconfig.get('DBNAME'))
-@click.option('--dbuser', default=flaskconfig.get('DBNAME'))
+@click.option('--dbuser', default=flaskconfig.get('DBUSER'))
 def main(dbname, dbuser):
     # engine = create_engine("sqlite:///db.db", echo=True)
     
-    # print(os.environ)
+    # print(os.environ, dbuser, dbname)
+
     engine = create_engine("postgresql+psycopg2://%s@/%s"%(dbuser, dbname), echo=True)
     SessionMaker = sessionmaker(engine)
 
     ModelBase.metadata.create_all(engine)
-
-    
-    
 
     with SessionMaker() as session:
         print("start of cron")
@@ -78,6 +78,7 @@ def main(dbname, dbuser):
         fishai_vectors = []
         inet_vectors = []
         eov_vectors = []
+        tmv_vectors = []
 
         for v in q.all():
             print("start of vector", v)
@@ -107,6 +108,14 @@ def main(dbname, dbuser):
             if v.name == EquipmentOutageAggVector.__name__:
                 eov = EquipmentOutageAggVector(session, v)
                 eov_vectors.append(eov)
+                parse_and_schedule(v, eov.execute)
+                # res = eov.execute(daterange)
+                # print("end of vector", res)
+
+            if v.name == ThalosMountVector.__name__:
+                tmv = ThalosMountVector(session, v)
+                tmv_vectors.append(tmv)
+                parse_and_schedule(v, tmv.execute)
                 # res = eov.execute(daterange)
                 # print("end of vector", res)
             

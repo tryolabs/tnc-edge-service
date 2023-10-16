@@ -1,4 +1,5 @@
 
+import shutil
 import click
 import json
 import os
@@ -84,6 +85,14 @@ def run_reencode(output_dir: Path, sessionmaker: SessionMaker):
         p: CompletedProcess[str] = subprocess.run(cmd, shell=True, capture_output=True, text=True)
         if p.returncode == 0 and p.stderr.find("No such file") < 0 and p.stderr.find("Failed to start") < 0:
             update_reencoded_path = str(mkv_out_file.absolute())
+            
+            try:
+                # shutil.copy(mkv_out_file,  Path('/usbdrive/') / mkv_out_file.name )
+                pass
+            except:
+                # FileNotFoundError or some other permissions error. Drive must not be inserted. Ignore.
+                pass
+
 
         with sessionmaker() as session:
             session.execute(sa.text("update video_files set \

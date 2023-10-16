@@ -10,7 +10,7 @@ import subprocess
 import re
 import codecs
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 class InternetVector():
     target_ips = []
@@ -23,15 +23,17 @@ class InternetVector():
     def config(self, rv):
         self.rv = rv
         config = json.loads(rv.configblob)
-        self.target_ips = config['target_ips']
+        self.target_ips: list[str] = config['target_ips']
+        self.run_traceroute: bool = config['run_traceroute'] 
         print(self.rv)
         print(self.target_ips)
 
 
     
-    def execute(self, expected_timedelta):
+    def execute(self, expected_timedelta: timedelta):
         datetime_to = datetime.now(tz=timezone.utc)
         datetime_from = datetime_to - expected_timedelta
+
         last = self.session.query(Test)\
             .where(Test.vector_id == self.rv.id, Test.datetime_to < datetime_to)\
             .order_by(Test.datetime_to.desc())\
@@ -55,10 +57,11 @@ class InternetVector():
         datas = []
 
         for ip in self.target_ips:
-            data = traceroute(ip)
-            datas.append(data)
-            self.session.add(data)
-            self.session.commit()
+            if self.run_traceroute:
+                data = traceroute(ip)
+                datas.append(data)
+                self.session.add(data)
+                self.session.commit()
             
             data = ping(ip)
             datas.append(data)

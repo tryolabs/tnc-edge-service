@@ -31,6 +31,7 @@ class GpsVector():
     def execute(self, expected_timedelta, gpsDataSelect):
         datetime_to = datetime.now(tz=timezone.utc)
         datetime_from = datetime_to - expected_timedelta
+        
         last = self.session.query(Test)\
             .where(Test.vector_id == self.rv.id, Test.datetime_to < datetime_to)\
             .order_by(Test.datetime_to.desc())\

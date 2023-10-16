@@ -47,7 +47,7 @@ def csvfilter(s):
 def export_method_with_sqlalchemy_models(session: Session):
 
     try:
-        now = datetime.now()
+        now = datetime.now().astimezone(timezone.utc)
 
         result = session.query(Test)\
             .where(Test.datetime_from > now - timedelta(days=13), Test.vector_id == 2)\
@@ -55,11 +55,13 @@ def export_method_with_sqlalchemy_models(session: Session):
             .limit(1).all()
         rows = list(result)
         if len(rows) > 0:
+
+            partition = str(now.year) + "/" + str(now.month) + "/" + str(now.day)
             
             body = io.BytesIO()
             body.write((','.join([column.name for column in Test.__mapper__.columns]) + '\n').encode())
             [body.write((','.join([str(getattr(row, column.name)) for column in Test.__mapper__.columns]) + '\n').encode()) for row in rows]
-            bucket.put_object(Key="tnc_edge/"+Test.__tablename__+"/"+str(int(now.timestamp()))+".csv", Body=body.getvalue())
+            bucket.put_object(Key="tnc_edge/"+Test.__tablename__+"/"+partition+"/"+str(int(now.timestamp()))+".csv", Body=body.getvalue())
     except Exception as e:
         print("Error: exception in s3 uploader", e)
 

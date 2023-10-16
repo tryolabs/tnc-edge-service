@@ -7,6 +7,8 @@ from vector import InternetVector
 
 import json
 
+from datetime import datetime, timedelta, timezone
+
 
 
 class EquipmentOutageAggVector():
@@ -24,7 +26,11 @@ class EquipmentOutageAggVector():
         print(self.rv)
 
 
-    def execute(self, datetime_from, datetime_to):
+    def execute(self, expected_timedelta: timedelta):
+
+        datetime_to = datetime.now(tz=timezone.utc)
+        datetime_from = datetime_to - expected_timedelta
+
         result = Test(name="equipment outage aggregator from %s to %s"%(datetime_from, datetime_to), vector=self.rv)
         self.session.add(result)
         self.session.commit()
@@ -39,17 +45,22 @@ class EquipmentOutageAggVector():
         expweighted = 0.0
         outage = 0.0
 
+        # find all sequential outages. 
+        # Determine a score based on how many and how long the outages are.
+        # longer sequences have a much higher weight by cubing its length
+        # divide by a constant scaling factor, then equalize to 0<x<1 with 1-1/(x+1)
         for test in tests.all():
             print("expweighted: %s outage: %d "%(expweighted,outage))
             if test.score > 0.0:
                 outage += 1
             else:
                 if outage > 0:
-                    expweighted += outage * outage * outage / 27.0
+                    # this is the end of a sequence, cube its length
+                    expweighted += outage * outage * outage / 200.0
                 outage = 0
         
         if outage > 0:
-            expweighted += outage * outage * outage / 27.0
+            expweighted += outage * outage * outage / 200.0
         
         print("expweighted: %s outage: %d "%(expweighted,outage))
         

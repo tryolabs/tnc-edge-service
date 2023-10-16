@@ -4,6 +4,7 @@ from flask import Flask, g
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 
+from sqlalchemy import text
 from sqlalchemy.orm import scoped_session, sessionmaker
 import os
 
@@ -35,6 +36,14 @@ with app.app_context():
     from alembic import command, config
     cfg = config.Config("alembic.ini")
     command.upgrade(cfg, "head")
+    with db.engine.begin() as connection:
+        connection.execute(text("SELECT setval('boatschedules_id_seq', (SELECT MAX(id) FROM boatschedules));"))
+        connection.execute(text("SELECT setval('deckhandevents_id_seq', (SELECT MAX(id) FROM deckhandevents));"))
+        connection.execute(text("SELECT setval('fishaidata_id_seq', (SELECT MAX(id) FROM fishaidata));"))
+        connection.execute(text("SELECT setval('internetdata_id_seq', (SELECT MAX(id) FROM internetdata));"))
+        connection.execute(text("SELECT setval('ondeckdata_id_seq', (SELECT MAX(id) FROM ondeckdata));"))
+        connection.execute(text("SELECT setval('tests_id_seq', (SELECT MAX(id) FROM tests));"))
+        connection.execute(text("SELECT setval('vectors_id_seq', (SELECT MAX(id) FROM vectors));"))
 
 
 from api import deckhand
