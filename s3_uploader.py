@@ -101,12 +101,13 @@ def s3uploader(cpool, boat, ver):
                     cur.execute('select * from '+table+' where datetime > %s and datetime <= %s;', (dates[0], dates[1]))
 
 
-                rows = cur.fetchall()
-                body = io.BytesIO()
-                body.write((','.join([column[0] for column in columns]) + '\n').encode())
-                [body.write((','.join([csvfilter(str(value)) for value in row]) + '\n').encode()) for row in rows]
+                rows = list(cur.fetchall())
+                if len(rows) > 0:
+                    body = io.BytesIO()
+                    body.write((','.join([column[0] for column in columns]) + '\n').encode())
+                    [body.write((','.join([csvfilter(str(value)) for value in row]) + '\n').encode()) for row in rows]
 
-                bucket.put_object(Key="tnc_edge/"+boat+"_"+ver+"_"+table+"/"+str(int(dates[1].timestamp()))+".csv", Body=body.getvalue())
+                    bucket.put_object(Key="tnc_edge/"+boat+"_"+ver+"_"+table+"/"+str(int(dates[1].timestamp()))+".csv", Body=body.getvalue())
 
                 cur.execute('insert into s3uploads (datetime, tablename) values (%s, %s)', (dates[1], table,))
                 conn.commit()
