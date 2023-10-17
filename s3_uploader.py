@@ -100,6 +100,8 @@ def s3uploader(cpool, boat, ver):
                 else:
                     cur.execute('select * from '+table+' where datetime > %s and datetime <= %s;', (dates[0], dates[1]))
 
+                now = datetime.now().astimezone(timezone.utc)
+                partition = str(now.year) + "/" + str(now.month) + "/" + str(now.day)
 
                 rows = list(cur.fetchall())
                 if len(rows) > 0:
@@ -107,7 +109,7 @@ def s3uploader(cpool, boat, ver):
                     body.write((','.join([column[0] for column in columns]) + '\n').encode())
                     [body.write((','.join([csvfilter(str(value)) for value in row]) + '\n').encode()) for row in rows]
 
-                    bucket.put_object(Key="tnc_edge/"+boat+"_"+ver+"_"+table+"/"+str(int(dates[1].timestamp()))+".csv", Body=body.getvalue())
+                    bucket.put_object(Key="tnc_edge/"+boat+"_"+ver+"_"+table+"/"+partition+"/"+str(int(dates[1].timestamp()))+".csv", Body=body.getvalue())
 
                 cur.execute('insert into s3uploads (datetime, tablename) values (%s, %s)', (dates[1], table,))
                 conn.commit()
@@ -121,7 +123,8 @@ def s3uploader(cpool, boat, ver):
 @click.option('--dbuser', default=flaskconfig.get('DBUSER'))
 @click.option('--boatname', default=flaskconfig.get('BOAT_NAME'))
 @click.option('--dbtablesversion', default=flaskconfig.get('DB_TABLES_VERSION'))
-def main(dbname, dbuser, boatname, dbtablesversion):
+@click.option('--test', flag=True)
+def main(dbname, dbuser, boatname, dbtablesversion, test):
     
     # engine = create_engine("postgresql+psycopg2://%s@/%s"%(dbuser, dbname), echo=True)
     # SessionMaker = sessionmaker(engine)
@@ -131,6 +134,9 @@ def main(dbname, dbuser, boatname, dbtablesversion):
     
     cpool = SimpleConnectionPool(1, 1, database=dbname, user=dbuser)
     
+    if test:
+
+        return
 
     def runonce(cpool, boatname, dbtablesversion):
         s3uploader(cpool, boatname, dbtablesversion)
