@@ -782,3 +782,43 @@ EOF
   rm "$TMP_FILE"
 fi
 
+
+
+
+TMP_FILE="$(mktemp)"
+cat > "$TMP_FILE" << EOF
+[Unit]
+Description=Vector Schedule TNC
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+User=$USERNAME
+Group=$USERNAME
+WorkingDirectory=$USERHOME/tnc-edge-service
+Environment=ENVIRONMENT=$ENVIRONMENT
+ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 vector_schedule.py
+Restart=always
+RestartSec=300
+
+[Install]
+WantedBy=default.target
+
+EOF
+
+if ! [ -e "/etc/systemd/system/vector_schedule.service" ] ; then
+  sudo cp "$TMP_FILE" /etc/systemd/system/vector_schedule.service
+
+  sudo systemctl daemon-reload 
+  sudo systemctl enable "vector_schedule.service"
+  sudo systemctl start "vector_schedule.service"
+
+elif ! sudo diff "$TMP_FILE" /etc/systemd/system/vector_schedule.service >/dev/null; then
+  sudo cp "$TMP_FILE" /etc/systemd/system/vector_schedule.service
+
+  sudo systemctl daemon-reload 
+  sudo systemctl restart "vector_schedule.service"
+fi
+rm "$TMP_FILE"
+
+
