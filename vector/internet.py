@@ -39,17 +39,7 @@ class InternetVector():
             .order_by(Test.datetime_to.desc())\
             .limit(1).all()
         
-        if len(list(last)) :
-            last_datetime = last[0].datetime_to
-            if datetime_to - last_datetime < expected_timedelta * 2:
-                datetime_from = last_datetime
-                print("found previous run, referencing datetime_to")
-            else:
-                print("found previous run, datetime_to is too old")
-        else:
-            print("no previous run found, using expected_timedelta")
-        
-        result = Test(name="internet test from %s to %s"%(datetime_from,datetime_to), vector=self.rv)
+        result = Test(name="internet test at %s"%(datetime_to.strftime('%Y-%m-%d %H:%M:%SZ')), vector=self.rv)
         self.session.add(result)
         self.session.commit()
         # print(result)

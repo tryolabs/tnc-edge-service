@@ -47,7 +47,7 @@ class ThalosMountVector():
                     datedirs = [ datedir.name for datedir in camdirs.iterdir() ]
                     if len(datedirs) > 0:
                         result.score -= 0.125
-                        if now.astimezone(timezone.utc).strftime('%Y-%m-%d') in datedirs:
+                        if now.astimezone(timezone.utc).strftime('%d-%m-%Y') in datedirs:
                             result.score -= 0.125
             if result.score < 1.0:
                 result.score -= 0.5
