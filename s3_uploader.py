@@ -123,7 +123,7 @@ def s3uploader(cpool, boat, ver):
 @click.option('--dbuser', default=flaskconfig.get('DBUSER'))
 @click.option('--boatname', default=flaskconfig.get('BOAT_NAME'))
 @click.option('--dbtablesversion', default=flaskconfig.get('DB_TABLES_VERSION'))
-@click.option('--test', flag=True)
+@click.option('--test', is_flag=True)
 def main(dbname, dbuser, boatname, dbtablesversion, test):
     
     # engine = create_engine("postgresql+psycopg2://%s@/%s"%(dbuser, dbname), echo=True)
