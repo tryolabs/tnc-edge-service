@@ -20,7 +20,7 @@ flaskconfig.from_object('config.defaults')
 if 'ENVIRONMENT' in os.environ:
     flaskconfig.from_envvar('ENVIRONMENT')
 
-boatname = flaskconfig.get('BOAT_NAME')
+thalosviddir = flaskconfig.get('THALOS_VIDEO_DIR')
 
 class ThalosVideosExistVector():
     rv: RiskVector
@@ -60,7 +60,7 @@ class ThalosVideosExistVector():
         result.score = 1.0
         for cam in ['cam1', 'cam2']:
             try:
-                mp4vid = Path('/thalos/' + boatname + '/videos/' + cam + '/' + nowfloorminus10min.strftime('%d-%m-%Y') + '/' + nowfloorminus10min.strftime('%H') + '/' + nowstr + ".mp4.done")
+                mp4vid = Path(thalosviddir + '/' + cam + '/' + nowfloorminus10min.strftime('%d-%m-%Y') + '/' + nowfloorminus10min.strftime('%H') + '/' + nowstr + ".mp4.done")
                 st = mp4vid.stat()
                 
                 if st.st_size > 1000000:
