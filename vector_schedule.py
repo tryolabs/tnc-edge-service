@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker, Session
 import os
 
 from model import Base as ModelBase, RiskVector, RiskVectorModelView, Test, TestModelView
-from vector import GpsVector, FishAiEventsComeInFourHourBurstsVector, InternetVector, EquipmentOutageAggVector, ThalosMountVector
+from vector import GpsVector, FishAiEventsComeInFourHourBurstsVector, InternetVector, EquipmentOutageAggVector, ThalosMountVector, ThalosVideosExistVector
 
 import sqlite3
 from datetime import datetime, timedelta, timezone
@@ -79,6 +79,7 @@ def main(dbname, dbuser):
         inet_vectors = []
         eov_vectors = []
         tmv_vectors = []
+        tve_vectors = []
 
         for v in q.all():
             print("start of vector", v)
@@ -119,6 +120,12 @@ def main(dbname, dbuser):
                 # res = eov.execute(daterange)
                 # print("end of vector", res)
             
+            if v.name == ThalosVideosExistVector.__name__:
+                tve = ThalosVideosExistVector(session, v)
+                tve_vectors.append(tve)
+                parse_and_schedule(v, tve.execute)
+                # res = eov.execute(daterange)
+                # print("end of vector", res)
 
 
         for v in all_vectors:
