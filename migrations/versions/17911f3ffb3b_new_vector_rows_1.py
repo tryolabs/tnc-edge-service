@@ -30,6 +30,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    
+    op.get_bind().execute("delete from tests where vector_id = (select id from vectors where name = 'InternetVector');");
+
     t = sa.table('vectors')
     op.get_bind().execute("delete from vectors where name = 'InternetVector';")
 

@@ -10,3 +10,5 @@ from .equipment_outage_agg import EquipmentOutageAggVector
 
 from .thalos_mount import ThalosMountVector
 from .thalos_vids_exist import ThalosVideosExistVector
+
+from .elogtimegaps import ElogTimeGapsVector

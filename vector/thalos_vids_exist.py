@@ -59,7 +59,7 @@ class ThalosVideosExistVector():
         self.session.add(result)
         self.session.commit()
         result.score = 1.0
-        errors = ""
+        errors = []
         for cam in ['cam1', 'cam2']:
             try:
                 mp4vid = Path(thalosviddir + '/' + cam + '/' + nowfloorminus15min.strftime('%d-%m-%Y') + '/' + nowfloorminus15min.strftime('%H') + '/' + nowstr + ".mp4.done")
@@ -69,7 +69,7 @@ class ThalosVideosExistVector():
                     result.score -= 0.25 * ( 1.0 - (1.0 / (1.0 +  st.st_size / 500000.0 )) )
             except Exception as e:
                 print("error", type(e), e)
-                errors += str(e)
+                errors.append(str(e))
             try:
                 mp4vid = Path(thalosviddir + '/' + cam + '/' + nowfloorminus10min.strftime('%d-%m-%Y') + '/' + nowfloorminus10min.strftime('%H') + '/' + nowstr + ".avi.done")
                 st = mp4vid.stat()
@@ -79,9 +79,9 @@ class ThalosVideosExistVector():
                     result.score -= 0.25 * ( 1.0 - (1.0 / (1.0 +  st.st_size / 500000.0 )) )
             except Exception as e:
                 print("error", type(e), e)
-                errors += str(e)
+                errors.append(str(e))
         if len(errors)> 0:
-            result.detail = errors
+            result.detail = "\n".join(errors)
         self.session.commit()
 
         return result

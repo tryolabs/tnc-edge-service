@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker, Session
 import os
 
 from model import Base as ModelBase, RiskVector, RiskVectorModelView, Test, TestModelView
-from vector import GpsVector, FishAiEventsComeInFourHourBurstsVector, InternetVector, EquipmentOutageAggVector, ThalosMountVector, ThalosVideosExistVector
+from vector import GpsVector, FishAiEventsComeInFourHourBurstsVector, InternetVector, EquipmentOutageAggVector, ThalosMountVector, ThalosVideosExistVector, ElogTimeGapsVector
 
 import sqlite3
 from datetime import datetime, timedelta, timezone
@@ -80,6 +80,7 @@ def main(dbname, dbuser):
         eov_vectors = []
         tmv_vectors = []
         tve_vectors = []
+        eltg_vectors = []
 
         for v in q.all():
             print("start of vector", v)
@@ -126,6 +127,12 @@ def main(dbname, dbuser):
                 parse_and_schedule(v, tve.execute)
                 # res = eov.execute(daterange)
                 # print("end of vector", res)
+            
+            if v.name == ElogTimeGapsVector.__name__:
+                eltg = ElogTimeGapsVector(session, v)
+                eltg_vectors.append(eltg)
+                parse_and_schedule(v, eltg.execute)
+
 
 
         for v in all_vectors:
@@ -139,7 +146,7 @@ def main(dbname, dbuser):
                 break
             elif n > 0:
                 # sleep exactly the right amount of time
-                print("sleeping for:", n)
+                click.echo("sleeping for: {}".format(n))
                 time.sleep(n)
             schedule.run_pending()
 
