@@ -24,7 +24,7 @@ def upgrade() -> None:
             found_id = row[0]
     
     if found_id is None:
-        op.get_bind().execute('insert into vectors (name, configblob) values (\'InternetVector\', \'{"target_ips":["8.8.8.8","1.1.1.1","208.67.222.222","9.9.9.9"]}\');')
+        op.get_bind().execute('insert into vectors (name, configblob) values (\'InternetVector\', \'{"target_ips":["8.8.8.8","1.1.1.1","208.67.222.222","9.9.9.9"],"run_traceroute":false}\');')
     
     
 

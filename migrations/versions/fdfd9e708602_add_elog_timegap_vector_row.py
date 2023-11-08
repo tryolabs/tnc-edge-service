@@ -24,7 +24,7 @@ def upgrade() -> None:
             found_id = row[0]
     
     if found_id is None:
-        op.get_bind().execute('insert into vectors (name, configblob) values (\'ElogTimeGapsVector\', \'{}\');')
+        op.get_bind().execute('insert into vectors (name, configblob, schedule_string) values (\'ElogTimeGapsVector\', \'{}\', \'every 4 hours\');')
     
     
 

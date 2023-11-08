@@ -58,9 +58,13 @@ class GpsVector():
 
         gpsPointsOutOfBounds = 0
         for gpsData in gpsDatas:
-
-            nmea =  NMEAReader.parse(gpsData.sentence)
-            point = (nmea.lat, nmea.lon)
+            if hasattr(gpsData, 'sentence'):
+                nmea =  NMEAReader.parse(gpsData.sentence)
+                point = (nmea.lat, nmea.lon)
+            elif hasattr(gpsData, 'lat'):
+                point = (gpsData.lat, gpsData.lon)
+            else:
+                continue
 
             if not pointInBoundingBox(point, self.boundarysegments):
                 gpsPointsOutOfBounds += 1

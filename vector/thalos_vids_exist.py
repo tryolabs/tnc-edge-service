@@ -71,8 +71,8 @@ class ThalosVideosExistVector():
                 print("error", type(e), e)
                 errors.append(str(e))
             try:
-                mp4vid = Path(thalosviddir + '/' + cam + '/' + nowfloorminus10min.strftime('%d-%m-%Y') + '/' + nowfloorminus10min.strftime('%H') + '/' + nowstr + ".avi.done")
-                st = mp4vid.stat()
+                avivid = Path(thalosviddir + '/' + cam + '/' + nowfloorminus15min.strftime('%d-%m-%Y') + '/' + nowfloorminus15min.strftime('%H') + '/' + nowstr + ".avi.done")
+                st = avivid.stat()
                 
                 # score based on size? I guess? larger than 1MiB is like 65% confident that the file is ok
                 if st.st_size > 0:
