@@ -311,7 +311,7 @@ def v2_parse(output_dir: Path, sessionmaker: SessionMaker):
     click.echo("found {} _ondeck.json files".format(str(len(found_ondeck_files))))
 
     with sessionmaker() as session:
-        results: Query[OndeckData] = session.query(OndeckData).where(OndeckData.status == 'queued' or OndeckData.status == 'runningskiphalf' )
+        results: Query[OndeckData] = session.query(OndeckData).where( sa.or_( OndeckData.status == 'queued' , OndeckData.status == 'runningskiphalf' ))
         for pending_ondeckdata in results:
             is_skiphalf = pending_ondeckdata.status == "runningskiphalf"
             # click.echo("found {} queued row".format(str(pending_ondeckdata)))
@@ -337,7 +337,7 @@ def v2_errors(sessionmaker: SessionMaker):
             input_path = error.get('input_path')
             error_message = error.get('error_message')
 
-            if error_message.startswith('Task performance mode set to SKIP inference skips every second frame'):
+            if error_message.startswith('Task performance mode set to SKIP'):
                 with sessionmaker() as session:
                     session.execute(sa.text("""insert into ondeckdata ( video_uri, status ) 
                                 values ( :decrypted_path, :skiphalfstatus ) 
