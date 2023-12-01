@@ -30,7 +30,7 @@ def depth_first_video_files(cameradir: Path):
                 vid_files = [x for x in hour_dir.iterdir() if x.is_file() and re.match('.*-(\d+)\.', x.name)]
                 vid_files.sort(key=lambda x: re.match('.*-(\d+)\.', x.name)[1], reverse=True)
                 for v in vid_files:
-                    if v.name.endswith(".avi.done"):
+                    if v.name.endswith(".avi.done") or v.name.endswith(".avi"):
                         yield v
     except GeneratorExit:
         return
@@ -57,6 +57,10 @@ def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, output_dir: Path,
         try:
             with conn.cursor() as cur:
                 for vid_file in depth_first_video_files(cameradir):
+
+                    vid_file_absolute_str = str(vid_file.absolute())
+                    vid_file_done_alt_str = vid_file_absolute_str[0:-len('.done')] if vid_file_absolute_str.endswith('.done') else vid_file_absolute_str+".done"
+
                     start_datetime: datetime = datetime.strptime(
                         vid_file.name[0:len('20-07-2023-22-20')],
                         '%d-%m-%Y-%H-%M')
@@ -71,8 +75,8 @@ def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, output_dir: Path,
 
                     s = vid_file.stat()
                     last_modified: datetime = datetime.fromtimestamp(s.st_mtime, tz=timezone.utc)
-                    cur.execute("select original_path, last_modified from video_files where original_path = %s;", 
-                                (str(vid_file.absolute()),))
+                    cur.execute("select original_path, last_modified from video_files where original_path in (%s, %s);", 
+                                (vid_file_absolute_str,vid_file_done_alt_str,))
                     rows = list(cur)
                     if len(rows) == 0:
                         # we have never seen this file before!
@@ -80,12 +84,12 @@ def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, output_dir: Path,
                         cur.execute("insert into video_files \
                                     (original_path, last_modified, start_datetime, cam_name) \
                                     values (%s, %s, %s, %s);", (
-                            str(vid_file.absolute()), last_modified, start_datetime, cameradir.name))
+                            vid_file_absolute_str, last_modified, start_datetime, cameradir.name))
                         conn.commit()
                     elif rows[0][1] != last_modified:
                         # found it, update the lastmodified
-                        cur.execute("update video_files set last_modified = %s where original_path = %s;", 
-                                    (last_modified, str(vid_file.absolute())))
+                        cur.execute("update video_files set last_modified = %s where original_path in (%s, %s);", 
+                                    (last_modified, vid_file_absolute_str, vid_file_done_alt_str))
                         conn.commit()
                     elif discovered_matching_last_modified > 3:
                         # I found files 4 where the lastmodified matches
@@ -106,6 +110,10 @@ def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, output_dir: Path,
         new_vids.reverse()
 
         for new_vid in new_vids:
+
+            new_vid_absolute_str = str(new_vid.absolute())
+            new_vid_done_alt_str = new_vid_absolute_str[0:-len('.done')] if new_vid_absolute_str.endswith('.done') else new_vid_absolute_str+".done"
+
             s = new_vid.stat()
             last_modified = datetime.fromtimestamp(s.st_mtime, tz=timezone.utc)
 
@@ -114,7 +122,7 @@ def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, output_dir: Path,
                 with conn.cursor() as cur:
                     cur.execute("select original_path, last_modified, start_datetime, \
                                 decrypted_path, decrypted_datetime, stdout, stderr \
-                                from video_files where original_path = %s;", (str(new_vid.absolute()),))
+                                from video_files where original_path in ( %s, %s );", (new_vid_absolute_str, new_vid_done_alt_str,))
                     #schema: (original_path, last_modified, start_datetime, decrypted_path, decrypted_datetime, stdout, stderr)
                     rows = list(cur)
                     if len(rows) == 1 and rows[0][3] is not None:
@@ -140,30 +148,30 @@ def video_fetch(cpool: SimpleConnectionPool, thalos_dir: Path, output_dir: Path,
                             --decrypt --output %s %s "%(
                             passphrase_file, 
                             str(output_file.absolute()), 
-                            str(new_vid.absolute())
+                            new_vid_absolute_str
                             )
                     else:
                         cmd = "cp %s %s"%(
-                            str(new_vid.absolute()),
+                            new_vid_absolute_str,
                             str(output_file.absolute())
                             )
                     p = subprocess.run(cmd, shell=True, capture_output=True, text=True)
                     if p.returncode == 0:
                         cur.execute("update video_files set decrypted_path = %s, \
                                     decrypted_datetime = %s, stdout = %s, stderr = %s \
-                                    where original_path = %s;", (
+                                    where original_path in ( %s, %s );", (
                             str(output_file.absolute()), datetime.now(tz=timezone.utc), 
                             p.stdout, p.stderr, 
-                            str(new_vid.absolute()))
+                            new_vid_absolute_str, new_vid_done_alt_str)
                         )
                         conn.commit()
                     else:
                         cur.execute("update video_files set decrypted_path = %s, \
                                     decrypted_datetime = %s, stdout = %s, stderr = %s \
-                                    where original_path = %s;", (
+                                    where original_path in ( %s, %s );", (
                             None, datetime.now(tz=timezone.utc), 
                             p.stdout, p.stderr, 
-                            str(new_vid.absolute()))
+                            new_vid_absolute_str, new_vid_done_alt_str)
                         )
                         conn.commit()
             finally:

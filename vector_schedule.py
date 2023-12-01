@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker, Session
 import os
 
 from model import Base as ModelBase, RiskVector, RiskVectorModelView, Test, TestModelView
-from vector import GpsVector, FishAiEventsComeInFourHourBurstsVector, InternetVector, EquipmentOutageAggVector, ThalosMountVector, ThalosVideosExistVector, ElogTimeGapsVector
+from vector import GpsVector, FishAiEventsComeInFourHourBurstsVector, InternetVector, EquipmentOutageAggVector, ThalosMountVector, ThalosVideosExistVector, ElogTimeGapsVector,CatchCountA
 
 import sqlite3
 from datetime import datetime, timedelta, timezone
@@ -81,6 +81,7 @@ def main(dbname, dbuser):
         tmv_vectors = []
         tve_vectors = []
         eltg_vectors = []
+        cca_vectors = []
 
         for v in q.all():
             print("start of vector", v)
@@ -133,6 +134,10 @@ def main(dbname, dbuser):
                 eltg_vectors.append(eltg)
                 parse_and_schedule(v, eltg.execute)
 
+            if v.name == CatchCountA.__name__:
+                cca = CatchCountA(session, v)
+                cca_vectors.append(cca)
+                parse_and_schedule(v, cca.execute)
 
 
         for v in all_vectors:

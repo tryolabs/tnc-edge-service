@@ -550,11 +550,14 @@ EOF
 fi
 
 
+if ! sudo test -e "/root/purge-video.sh"  || ! sudo diff "$scriptdir/purge-video.sh" /root/purge-video.sh >/dev/null ; then
+
+  sudo cp "$scriptdir/purge-video.sh" /root/purge-video.sh
+
+fi
 
 
 if ! [ -e "/etc/systemd/system/purge-video.service" ] ; then
-  
-  sudo cp "$scriptdir/purge-video.sh" /root/purge-video.sh
 
   cat > ./purge-video.service << EOF
 [Unit]
@@ -566,7 +569,7 @@ StartLimitIntervalSec=0
 WorkingDirectory=/root
 ExecStart=/bin/bash /root/purge-video.sh
 Restart=always
-RestartSec=1200
+RestartSec=600
 
 [Install]
 WantedBy=default.target
@@ -595,7 +598,7 @@ User=$USERNAME
 Group=$USERNAME
 WorkingDirectory=$USERHOME/tnc-edge-service
 Environment=ENVIRONMENT=$ENVIRONMENT
-ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 run_ondeck.py --force_v2
+ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 run_ondeck.py
 Restart=always
 RestartSec=30
 
