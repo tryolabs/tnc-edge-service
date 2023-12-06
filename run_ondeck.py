@@ -12,7 +12,7 @@ import subprocess
 from subprocess import CompletedProcess
 import time
 
-from model import Base as ModelBase, VideoFile, OndeckData
+from model import Base as ModelBase, VideoFile, OndeckData, Track
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker as SessionMaker, Query
 from sqlalchemy.orm.session import Session
@@ -180,16 +180,59 @@ def v2_parse_json(session: Session, decrypted_path: Path, json_out_file: Path, o
 
 
     detectionconfidences = []
-    trackedconfidences = []
+    # trackedconfidences = []
+
+    active_tracks = {}
+    done_tracks: list[Track] = []
+                    
+                    
+
     for frame in frames:
         detectionconfidences.extend(frame.get('confidence'))
         
-        idx = 0
-        for trackingId in frame.get('trackingIds'):
-            if trackingId in frame.get('allActiveTrackingIds'):
-                trackedconfidences.append(frame.get('confidence')[idx])
-            idx += 1
+        # idx = 0
+        # for trackingId in frame.get('trackingIds'):
+        #     if trackingId in frame.get('allActiveTrackingIds'):
+        #         trackedconfidences.append(frame.get('confidence')[idx])
+        #     idx += 1
+        
+        if 'allActiveTrackingIds' not in frame:
+            continue
+        for activeTrackingId_str in frame['allActiveTrackingIds']:
+            activeTrackingId = int(activeTrackingId_str)
+            if activeTrackingId not in active_tracks.keys():
+                active_tracks[activeTrackingId] = Track()
+                active_tracks[activeTrackingId].video_uri = str(decrypted_path.absolute())
+                active_tracks[activeTrackingId].cocoannotations_uri = str(json_out_file.absolute())
+                active_tracks[activeTrackingId].track_id = activeTrackingId
+                active_tracks[activeTrackingId].first_framenum = frame['frameNum']
+                active_tracks[activeTrackingId].confidences = []
+            t = active_tracks[activeTrackingId]
+            try: 
+                idx = frame['trackingIds'].index(activeTrackingId_str)
+                t.confidences.append(frame['confidence'][idx])
+            except:
+                t.confidences.append(0.0)
+        for track_id in list(active_tracks.keys()):
+            track = active_tracks[track_id]
+            if str(track_id) not in frame['allActiveTrackingIds']:
+                # the confidences will probably have a long trail of 0s at the end, which are not useful
+                # cut them out
+                track.confidences.reverse()
+                last_nonzero_index = next((i for (i,x) in enumerate(track.confidences) if x), None)
+                track.confidences.reverse()
+                if last_nonzero_index:
+                    track.confidences = track.confidences[:-last_nonzero_index]
 
+                track.last_framenum = frame['frameNum']
+                done_tracks.append(track)
+                active_tracks.pop(track_id)
+
+                
+    session.add_all(done_tracks)
+
+
+    session.commit()
     
     if len(detectionconfidences) > 0:
         meandetectionconfidence = float(sum(detectionconfidences)) / float(len(detectionconfidences))
@@ -197,8 +240,9 @@ def v2_parse_json(session: Session, decrypted_path: Path, json_out_file: Path, o
         meandetectionconfidence = 0
 
 
-    if len(trackedconfidences) > 0:
-        meantrackedconfidence = float(sum(trackedconfidences)) / float(len(trackedconfidences))
+    if len(done_tracks) > 0:
+        tracks_avg_conf = list(map(lambda t: float(sum(t.confidences)) / float(len(t.confidences)) if len(t.confidences) else 0.0, done_tracks))
+        meantrackedconfidence = float(sum(tracks_avg_conf)) / float(len(tracks_avg_conf)) if len(tracks_avg_conf) else 0.0
     else:
         meantrackedconfidence = 0
                     
