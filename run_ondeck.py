@@ -112,14 +112,16 @@ def run_ondeck(output_dir: Path, engine: Path, sessionmaker: SessionMaker, thalo
         with sessionmaker() as session:
             video_files = next_videos(session, thalos_cam_name)
 
-def parse_json(session: Session, decrypted_path: Path, json_out_file: Path):
+def parse_json(session: Session, decrypted_path: Path, json_out_file: Path, only_tracks=False):
     with json_out_file.open() as f:
         o: dict = json.load(f)
 
         if 'overallRuntimeMs' in o.keys():
+            if only_tracks:
+                return
             v1_parse_json(session, decrypted_path, json_out_file, o)
         elif 'overallRuntimeSeconds' in o.keys():
-            v2_parse_json(session, decrypted_path, json_out_file, o)
+            v2_parse_json(session, decrypted_path, json_out_file, o, only_tracks=only_tracks)
 
 def v1_parse_json(session: Session, decrypted_path: Path, json_out_file: Path, o: dict):
     cnt = o.get('overallCount')
@@ -170,7 +172,7 @@ def v1_parse_json(session: Session, decrypted_path: Path, json_out_file: Path, o
     session.commit()
 
 
-def v2_parse_json(session: Session, decrypted_path: Path, json_out_file: Path, o: dict):
+def v2_parse_json(session: Session, decrypted_path: Path, json_out_file: Path, o: dict, only_tracks=False):
     
     cnt = o.get('overallCount')
     catches = o.get('overallCatches')
@@ -233,6 +235,9 @@ def v2_parse_json(session: Session, decrypted_path: Path, json_out_file: Path, o
 
 
     session.commit()
+
+    if only_tracks:
+        return
     
     if len(detectionconfidences) > 0:
         meandetectionconfidence = float(sum(detectionconfidences)) / float(len(detectionconfidences))

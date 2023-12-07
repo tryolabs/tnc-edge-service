@@ -1,30 +1,37 @@
 
-from model import Base, Track
+from model import Base, Track, OndeckData
 
-if __name__ == '__main__':
+import os
+from flask.config import Config as FlaskConfig
+flaskconfig = FlaskConfig(root_path='')
 
-    import os
-    from flask.config import Config as FlaskConfig
-    flaskconfig = FlaskConfig(root_path='')
+flaskconfig.from_object('config.defaults')
+if 'ENVIRONMENT' in os.environ:
+    flaskconfig.from_envvar('ENVIRONMENT')
 
-    flaskconfig.from_object('config.defaults')
-    if 'ENVIRONMENT' in os.environ:
-        flaskconfig.from_envvar('ENVIRONMENT')
 
-    import click
+import sqlalchemy as sa
+from sqlalchemy.orm import sessionmaker as SessionMaker, Session
 
-    @click.command()
-    @click.option('--dbname', default=flaskconfig.get('DBNAME'))
-    @click.option('--dbuser', default=flaskconfig.get('DBUSER'))
-    def main(dbname, dbuser):
+import click
 
-        import sqlalchemy as sa
-        from sqlalchemy.orm import sessionmaker as SessionMaker
+@click.group(invoke_without_command=True)
+@click.pass_context
+@click.option('--dbname', default=flaskconfig.get('DBNAME'))
+@click.option('--dbuser', default=flaskconfig.get('DBUSER'))
+def main(ctx, dbname, dbuser):
 
-        sa_engine = sa.create_engine("postgresql+psycopg2://%s@/%s"%(dbuser, dbname), echo=True)
-        sessionmaker = SessionMaker(sa_engine)
+    sa_engine = sa.create_engine("postgresql+psycopg2://%s@/%s"%(dbuser, dbname), echo=True)
+    sessionmaker = SessionMaker(sa_engine)
 
-        Base.metadata.create_all(sa_engine)
+    Base.metadata.create_all(sa_engine)
+
+    ctx.ensure_object(dict)
+    ctx.obj['sessionmaker'] = sessionmaker
+
+    if ctx.invoked_subcommand is None:
+        # click.echo('I was invoked without subcommand')
+
         with sessionmaker() as session:
             active_tracks = {}
             done_tracks = []
@@ -64,5 +71,20 @@ if __name__ == '__main__':
             session.commit()
 
         
-    
+@main.command()
+@click.pass_context
+def archive(ctx):
+    import run_ondeck
+    from pathlib import Path
+
+    sessionmaker = ctx.obj['sessionmaker']
+    session: Session = sessionmaker()
+    with session:
+        res = session.execute(sa.text("select ondeckdata.video_uri, ondeckdata.cocoannotations_uri from ondeckdata \
+                                      left join tracks on ondeckdata.cocoannotations_uri = tracks.cocoannotations_uri \
+                                      where tracks.id is null and ondeckdata.cocoannotations_uri like '/videos/%ondeck.json';"))
+        for (video_uri, json_uri) in res:
+            run_ondeck.parse_json(session, Path(video_uri), Path(json_uri), only_tracks=True)
+
+if __name__ == '__main__':
     main()
