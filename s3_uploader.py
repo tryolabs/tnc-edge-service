@@ -44,11 +44,11 @@ csvprintable = csvprintable.replace(',', '')
 def csvfilter(s):
     return ''.join(filter(lambda c: c in csvprintable, s))
 
-def export_method_with_sqlalchemy_models(session: Session):
+def DEPRECATED_export_method_with_sqlalchemy_models(session: Session):
 
     try:
         now = datetime.now().astimezone(timezone.utc)
-
+        
         result = session.query(Test)\
             .where(Test.datetime_from > now - timedelta(days=13), Test.vector_id == 2)\
             .order_by(Test.datetime.desc())\
@@ -65,7 +65,7 @@ def export_method_with_sqlalchemy_models(session: Session):
     except Exception as e:
         print("Error: exception in s3 uploader", e)
 
-def s3uploader(cpool, boat, ver):
+def s3uploader(cpool: SimpleConnectionPool, boat, ver):
 
     tables = [
         'deckhandevents',
@@ -117,7 +117,61 @@ def s3uploader(cpool, boat, ver):
     finally:
         cpool.putconn(conn)
 
+def s3psqlcopyer(cpool: SimpleConnectionPool, boat, ver):
 
+    tables = [
+        'deckhandevents',
+        'fishaidata',
+        'gpsdata',
+        'internetdata',
+        'deckhandevents_mostrecentlonglineevent_jsonextracted',
+        'tests',
+        'video_files',
+        'ondeckdata',
+    ]
+
+    conn: psycopg2.connection = cpool.getconn()
+    
+    try:
+        with conn.cursor() as cur:
+            for table in tables:
+                # print(table)
+                cur.execute("SELECT column_name FROM information_schema.columns \
+                            WHERE table_name = %s order by ordinal_position;", (table,))
+                columns = cur.fetchall()
+                
+                cur.execute("select max(a.max), CURRENT_TIMESTAMP from ( \
+                                select max(s3uploads.datetime), CURRENT_TIMESTAMP \
+                                from s3uploads where tablename = %s group by tablename \
+                                union select timestamp with time zone '1970-01-01' as max, CURRENT_TIMESTAMP \
+                            ) a;", (table,))
+                dates = cur.fetchone()
+
+                cur.execute(f"CREATE TEMP TABLE t as SELECT * from {table} where false;")
+
+                if table == 'video_files':
+                   cur.execute(f"insert into t (select * from video_files where start_datetime > '{dates[0]}' and start_datetime <= '{dates[1]}');")
+                else:
+                   cur.execute(f"insert into t (select * from {table} where datetime > '{dates[0]}' and datetime <= '{dates[1]}');")
+                copy_sql = f'COPY t TO STDOUT WITH CSV HEADER;'
+                now = datetime.now().astimezone(timezone.utc)
+                partition = str(now.year) + "/" + str(now.month) + "/" + str(now.day)
+
+                f = io.BytesIO()
+                cur.copy_expert(copy_sql, f)
+                f.seek(0)
+                f.readline() # csv header line
+                if len(f.readline()) > 0: # first line of data. If it exists, write to bucket
+                    f.seek(0)
+                    key = "tnc_edge/"+boat+"_"+ver+"_"+table+"/"+partition+"/"+str(int(dates[1].timestamp()))+".csv"
+                    click.echo(f'uploading {key}')
+                    bucket.put_object(Key=key, Body=f.getvalue())
+
+                cur.execute('insert into s3uploads (datetime, tablename) values (%s, %s)', (dates[1], table,))
+                cur.execute('drop table t;')
+                conn.commit()
+    finally:
+        cpool.putconn(conn)
 
 @click.command()
 @click.option('--dbname', default=flaskconfig.get('DBNAME'))
@@ -136,15 +190,16 @@ def main(dbname, dbuser, boatname, dbtablesversion, test):
     cpool = SimpleConnectionPool(1, 1, database=dbname, user=dbuser)
     
     if test:
+        # s3psqlcopyer(cpool, boatname, dbtablesversion)
 
         return
 
     def runonce(cpool, boatname, dbtablesversion):
-        s3uploader(cpool, boatname, dbtablesversion)
+        s3psqlcopyer(cpool, boatname, dbtablesversion)
         return schedule.CancelJob
 
     schedule.every(1).seconds.do(runonce, cpool, boatname, dbtablesversion)
-    schedule.every(1).hours.do(s3uploader, cpool, boatname, dbtablesversion)
+    schedule.every(1).hours.do(s3psqlcopyer, cpool, boatname, dbtablesversion)
 
     while 1:
         n = schedule.idle_seconds()
