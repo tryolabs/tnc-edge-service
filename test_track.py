@@ -84,7 +84,9 @@ def archive(ctx):
                                       left join tracks on ondeckdata.cocoannotations_uri = tracks.cocoannotations_uri \
                                       where tracks.id is null and ondeckdata.cocoannotations_uri like '/videos/%ondeck.json';"))
         for (video_uri, json_uri) in res:
-            run_ondeck.parse_json(session, Path(video_uri), Path(json_uri), only_tracks=True)
+            json_path = Path(json_uri)
+            if json_path.is_file():
+                run_ondeck.parse_json(session, Path(video_uri), json_path, only_tracks=True)
 
 if __name__ == '__main__':
     main()
