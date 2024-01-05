@@ -19,7 +19,7 @@ if [ "$ENVIRONMENT" == "" ] || ! [ -e "$ENVIRONMENT" ] ; then
 fi
 
 function help {
-  echo "usage: $SCRIPTNAME  [--do-github] [--do-copy-numpy] [--do-ondeck]"
+  echo "usage: $SCRIPTNAME  [--do-github] [--do-copy-numpy] [--do-ondeck] [--do-aifish]"
   exit 1
 }
 
@@ -33,6 +33,9 @@ while (( "$#" )); do
         ;;
       --do-ondeck)
         DO_ONDECK="y"
+        ;;
+      --do-aifish)
+        DO_AIFISH="y"
         ;;
       *)
           help
@@ -502,6 +505,14 @@ if ! [ -d "/videos" ] ; then
   sudo mkdir /videos
   sudo chmod go+rwx /videos
 fi
+if ! [ -d "/videos/processing" ] ; then
+  sudo mkdir /videos/processing
+  sudo chmod go+rwx /videos/processing
+fi
+if ! [ -d "/videos/output" ] ; then
+  sudo mkdir /videos/output
+  sudo chmod go+rwx /videos/output
+fi
 
 if ! [ -d "/usbdrive" ] ; then
   sudo mkdir /usbdrive
@@ -584,7 +595,7 @@ EOF
 fi
 
 
-if [ "x$(sudo docker image ls -q gcr.io/edge-gcr/edge-service-image:latest)" != "x" ] ; then
+if [ "$DO_ONDECK" ] && [ "x$(sudo docker image ls -q gcr.io/edge-gcr/edge-service-image:latest)" != "x" ] ; then
 
   TMP_FILE="$(mktemp)"
   cat > "$TMP_FILE" << EOF
@@ -748,6 +759,35 @@ rm "$TMP_FILE"
 
 if [ "$DO_ONDECK" ] ; then
 
+
+  if sudo jetson_clocks --show | grep -q "Xavier NX" ; then
+    DEVICE_STR="xavier"
+  fi
+  if sudo jetson_clocks --show | grep -q "Orin NX" ; then
+    DEVICE_STR="orin"
+  fi
+  if [ -z "$DEVICE_STR" ] ; then
+    echo "cannot determine jetson device. Please check the output of 'sudo jetson_clocks --show'"
+    exit 1
+  fi
+  if ! [ -s "$ENVIRONMENT" ] ; then
+    echo "this script needs access to the ENVIRONMENT file"
+    exit 1
+  fi 
+  export "$(grep ONDECK_MODEL_ENGINE "$ENVIRONMENT")"
+  export "$(grep ONDECK_POLYGON_STR "$ENVIRONMENT")"
+
+  if [ -z "$ONDECK_MODEL_ENGINE" ] ; then
+    ONDECK_ENGINE_OVERRIDE=""
+  else
+    ONDECK_ENGINE_OVERRIDE="-e ENGINE_OVERRIDE=$ONDECK_MODEL_ENGINE"
+  fi
+
+  if [ -z "$ONDECK_POLYGON_STR" ] ; then
+    echo "please set ONDECK_POLYGON_STR in ENVIRONMENT file"
+    exit 1
+  fi
+
   TMP_FILE="$(mktemp)"
   cat > "$TMP_FILE" << EOF
 [Unit]
@@ -762,7 +802,7 @@ Restart=always
 RestartSec=120
 ExecStartPre=-/usr/bin/docker stop ondeck_model
 ExecStartPre=-/usr/bin/docker rm ondeck_model
-ExecStart=/usr/bin/docker run --rm --name ondeck_model -p 5000:5000 --runtime nvidia -v /videos:/videos -e APP_CONTAINER_DIR=/videos edge-service-image:latest
+ExecStart=/usr/bin/docker run --rm --name ondeck_model -p 5000:5000 --runtime nvidia -v /videos:/videos -e APP_CONTAINER_DIR=/videos -e DEVICE=$DEVICE_STR -e CAMERA=$ONDECK_POLYGON_STR $ONDECK_ENGINE_OVERRIDE edge-service-image:latest
 ExecStartPost=-/usr/bin/docker exec -it ondeck_model sed -i'' -e 's#format_str = "%%Y-%%m-%%dT%%H:%%M:%%S.%%f%%z"#format_str = "%%Y-%%m-%%dT%%H:%%M:%%S.%%f%%Z"#' /app/app/workers/worker.py
 
 [Install]
@@ -783,6 +823,86 @@ EOF
     sudo systemctl restart "ondeck_model.service"
   fi
   rm "$TMP_FILE"
+fi
+
+
+if [ "$DO_AIFISH" ] ; then
+
+
+  TMP_FILE="$(mktemp)"
+  cat > "$TMP_FILE" << EOF
+[Unit]
+Description=Ai.Fish Runner
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+User=$USERNAME
+Group=$USERNAME
+WorkingDirectory=$USERHOME/tnc-edge-service
+Environment=ENVIRONMENT=$ENVIRONMENT
+ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 run_aifish.py
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=default.target
+
+EOF
+
+  if ! [ -e "/etc/systemd/system/aifish-runner.service" ] ; then
+    sudo cp "$TMP_FILE" /etc/systemd/system/aifish-runner.service
+
+    sudo systemctl daemon-reload 
+    sudo systemctl enable "aifish-runner.service"
+    sudo systemctl start "aifish-runner.service"
+
+  elif ! sudo diff "$TMP_FILE" /etc/systemd/system/aifish-runner.service >/dev/null; then
+    sudo cp "$TMP_FILE" /etc/systemd/system/aifish-runner.service
+
+    sudo systemctl daemon-reload 
+    sudo systemctl restart "aifish-runner.service"
+  fi
+  rm "$TMP_FILE"
+
+
+  TMP_FILE="$(mktemp)"
+  cat > "$TMP_FILE" << EOF
+[Unit]
+Description=Ai.Fish Model Container
+After=docker.service
+Requires=docker.service
+StartLimitIntervalSec=0
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+RestartSec=120
+ExecStartPre=-/usr/bin/docker stop aifish_model
+ExecStartPre=-/usr/bin/docker rm aifish_model
+ExecStart=/usr/bin/docker run --rm --name aifish_model --runtime nvidia --network host -v /videos/processing:/video -v /videos/output:/output x-aifish-s640c3:latest
+
+
+[Install]
+WantedBy=default.target
+EOF
+
+  if ! [ -e "/etc/systemd/system/aifish_model.service" ] ; then
+    sudo cp "$TMP_FILE" /etc/systemd/system/aifish_model.service
+
+    sudo systemctl daemon-reload 
+    sudo systemctl enable "aifish_model.service"
+    sudo systemctl start "aifish_model.service"
+
+  elif ! sudo diff "$TMP_FILE" /etc/systemd/system/aifish_model.service >/dev/null; then
+    sudo cp "$TMP_FILE" /etc/systemd/system/aifish_model.service
+
+    sudo systemctl daemon-reload 
+    sudo systemctl restart "aifish_model.service"
+  fi
+  rm "$TMP_FILE"
+
+
 fi
 
 

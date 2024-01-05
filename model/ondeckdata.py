@@ -25,7 +25,7 @@ class OndeckData(Base):
             [n + '='+ str(self.__getattribute__(n)) for n in [
                 'id',
                 'video_uri',
-                'video_file',
+                # 'video_file',
                 'cocoannotations_uri',
                 'datetime',
                 'overallcount',

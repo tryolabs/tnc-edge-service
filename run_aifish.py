@@ -1,6 +1,7 @@
 
 from datetime import datetime, timezone
 import click
+from collections import defaultdict
 import json
 import os
 from pathlib import Path
@@ -8,8 +9,10 @@ import re
 import requests
 from requests import Response
 import schedule
+import shutil
 import subprocess
 from subprocess import CompletedProcess
+import sys
 import time
 
 from model import Base as ModelBase, VideoFile, AifishData, Track
@@ -43,10 +46,10 @@ def next_videos(session: Session, thalos_cam_name):
             where workday_counts.count > :numvids
         ) workdays 
         on video_files.start_datetime >= workdays.most_recent_active_workday + time with time zone :times 
-        left join ondeckdata 
-        on video_files.decrypted_path = ondeckdata.video_uri 
+        left join aifishdata 
+        on video_files.decrypted_path = aifishdata.video_uri 
         where video_files.decrypted_path is not null 
-        and ondeckdata.video_uri is null
+        and aifishdata.video_uri is null
         and video_files.cam_name = :cam_name
         order by video_files.decrypted_datetime asc;
         """)).params(
@@ -58,73 +61,72 @@ def next_videos(session: Session, thalos_cam_name):
          })
      return list(results)
 
+def v2_next_videos(session: Session, thalos_cam_name):
+     results: Query[VideoFile] = session.query(VideoFile).from_statement(sa.text(
+        """
+        select video_files.* from video_files 
+        left join aifishdata 
+        on video_files.decrypted_path = aifishdata.video_uri 
+        where video_files.decrypted_path is not null 
+        and video_files.start_datetime is not null
+        and aifishdata.video_uri is null
+        and video_files.cam_name = :cam_name
+        order by video_files.start_datetime asc;
+        """)).params(
+         {
+             "cam_name": thalos_cam_name,
+         })
+     return list(results)
+
+
 MAGIC_VALUE_5_MiB = 5 * 1024 * 1024
 
 
 def parse_json(session: Session, decrypted_path: Path, json_out_file: Path, only_tracks=False):
     with json_out_file.open() as f:
-        o: dict = json.load(f)
-    
-        cnt = o.get('overallCount')
-        catches = o.get('overallCatches')
-        discards = o.get('overallDiscards')
-        runtime = o.get('overallRuntimeSeconds')
-        frames = o.get('frames', [])
+        detections = [json.loads(line) for line in f]
 
+        if len(detections) == 0:
+            # error handling here
+            pass
+        
+        fish_detections = list(filter(lambda d: d.get('class_name') == 'fish', detections))
 
-        detectionconfidences = []
+        if len(fish_detections) == 0:
+            # error handling here
+            pass
+
+        last_frame = max(map(lambda d: d.get('frame'), detections))
+        frames = []
+
+        detectionconfidences = list(filter(lambda x: x is not None, map(lambda d: d.get('object_confidence'), fish_detections)))
+        # = max(map(lambda detection: detection.get('object_confidence'), detections))
         # trackedconfidences = []
 
-        active_tracks = {}
-        done_tracks: list[Track] = []
-                        
-                        
+        tracks = defaultdict(list)
+        for d in fish_detections:
+            tracks[d.get('track')].append(d)
+        
+        cnt = len(tracks.keys())
 
-        for frame in frames:
-            detectionconfidences.extend(frame.get('confidence'))
-            
-            # idx = 0
-            # for trackingId in frame.get('trackingIds'):
-            #     if trackingId in frame.get('allActiveTrackingIds'):
-            #         trackedconfidences.append(frame.get('confidence')[idx])
-            #     idx += 1
-            
-            if 'allActiveTrackingIds' not in frame:
-                continue
-            for activeTrackingId_str in frame['allActiveTrackingIds']:
-                activeTrackingId = int(activeTrackingId_str)
-                if activeTrackingId not in active_tracks.keys():
-                    active_tracks[activeTrackingId] = Track()
-                    active_tracks[activeTrackingId].video_uri = str(decrypted_path.absolute())
-                    active_tracks[activeTrackingId].cocoannotations_uri = str(json_out_file.absolute())
-                    active_tracks[activeTrackingId].track_id = activeTrackingId
-                    active_tracks[activeTrackingId].first_framenum = frame['frameNum']
-                    active_tracks[activeTrackingId].confidences = []
-                t = active_tracks[activeTrackingId]
-                try: 
-                    idx = frame['trackingIds'].index(activeTrackingId_str)
-                    t.confidences.append(frame['confidence'][idx])
-                except:
-                    t.confidences.append(0.0)
-            for track_id in list(active_tracks.keys()):
-                track = active_tracks[track_id]
-                if str(track_id) not in frame['allActiveTrackingIds']:
-                    # the confidences will probably have a long trail of 0s at the end, which are not useful
-                    # cut them out
-                    track.confidences.reverse()
-                    last_nonzero_index = next((i for (i,x) in enumerate(track.confidences) if x), None)
-                    track.confidences.reverse()
-                    if last_nonzero_index:
-                        track.confidences = track.confidences[:-last_nonzero_index]
+        done_tracks = []
 
-                    track.last_framenum = frame['frameNum']
-                    done_tracks.append(track)
-                    active_tracks.pop(track_id)
+        for track_id, detections in tracks.items():
+            frame_nums = list(map(lambda d: d.get('frame'), detections))
+            min_frame = min(frame_nums)
+            max_frame = max(frame_nums)
 
-                    
+            t = Track()
+            t.video_uri = str(decrypted_path.absolute())
+            t.cocoannotations_uri = str(json_out_file.absolute())
+            t.track_id = track_id
+            t.first_framenum = min_frame
+            t.last_framenum = max_frame
+            t.confidences = [0 for i in range(1 + max_frame - min_frame)]
+            for d in detections:
+                t.confidences[d.get('frame') - min_frame] = d.get('object_confidence') or 0
+            done_tracks.append(t)
         session.add_all(done_tracks)
-
-
         session.commit()
 
         if only_tracks:
@@ -136,54 +138,24 @@ def parse_json(session: Session, decrypted_path: Path, json_out_file: Path, only
             meandetectionconfidence = 0
 
 
-        if len(done_tracks) > 0:
-            tracks_avg_conf = list(map(lambda t: float(sum(t.confidences)) / float(len(t.confidences)) if len(t.confidences) else 0.0, done_tracks))
-            meantrackedconfidence = float(sum(tracks_avg_conf)) / float(len(tracks_avg_conf)) if len(tracks_avg_conf) else 0.0
-        else:
-            meantrackedconfidence = 0
-                        
-
         # with sessionmaker() as session:
-        session.execute(sa.text("""insert into ondeckdata ( video_uri, cocoannotations_uri, 
-                                        overallcount, overallcatches, overalldiscards, overallruntimems, detection_confidence, tracked_confidence ) 
-                            values ( :decrypted_path, :json_out_file , :cnt, :catches, :discards, :runt, :mean_c, :mean_t) 
+        session.execute(sa.text("""insert into aifishdata ( video_uri, output_uri, 
+                                        count, detection_confidence ) 
+                            values ( :decrypted_path, :json_out_file , :cnt, :mean_c) 
                             on conflict (video_uri) do update set 
-                            cocoannotations_uri = :json_out_file,
-                            overallcount = :cnt,
-                            overallruntimems = :runt,
-                            tracked_confidence = :mean_t,
-                            overallcatches = :catches,
-                            overalldiscards = :discards,
+                            output_uri = :json_out_file,
+                            count = :cnt,
                             detection_confidence = :mean_c
                             ;"""), {
                                 "decrypted_path": str(decrypted_path.absolute()),
                                 "json_out_file":str(json_out_file.absolute()),
                                 "cnt":cnt, 
-                                "catches":catches, 
-                                "discards":discards,
-                                "runt":runtime, 
                                 "mean_c":meandetectionconfidence,
-                                "mean_t":meantrackedconfidence,
                         }
                 )
         session.commit()
 
-def v2_next_videos(session: Session, thalos_cam_name):
-     results: Query[VideoFile] = session.query(VideoFile).from_statement(sa.text(
-        """
-        select video_files.* from video_files 
-        left join ondeckdata 
-        on video_files.decrypted_path = ondeckdata.video_uri 
-        where video_files.decrypted_path is not null 
-        and video_files.start_datetime is not null
-        and ondeckdata.video_uri is null
-        and video_files.cam_name = :cam_name
-        order by video_files.start_datetime asc;
-        """)).params(
-         {
-             "cam_name": thalos_cam_name,
-         })
-     return list(results)
+VIDEO_TOO_SMALL = 1024*1024
 
 def enqueue(output_dir: Path, sessionmaker: SessionMaker, thalos_cam_name: str):
     
@@ -198,16 +170,38 @@ def enqueue(output_dir: Path, sessionmaker: SessionMaker, thalos_cam_name: str):
             # print(video_file)
             decrypted_path = Path(video_file.decrypted_path)
 
-            rname = decrypted_path.name[::-1]
+            # use_reencoded = False
+            v_source_path = str(decrypted_path.absolute())
+            v_source_name = decrypted_path.name
+            if not decrypted_path.exists() or not decrypted_path.is_file() or decrypted_path.stat().st_size < VIDEO_TOO_SMALL:
+                click.echo(f"original video file {decrypted_path.name} failed basic checks. Using reencoded")
+                # use_reencoded = True
+                if video_file.reencoded_path is None:
+                    click.echo(f"video not reencoded, skipping video")
+                    continue
+                reencoded_path = Path(video_file.reencoded_path)
+                v_source_path = str(reencoded_path.absolute())
+                v_source_name = reencoded_path.name
+                if not reencoded_path.exists() or not reencoded_path.is_file() or reencoded_path.stat().st_size < VIDEO_TOO_SMALL:
+                    click.echo(f"reencoded_video {reencoded_path.name} fails basic checks. skipping video")
+                    continue
+
+            rname = v_source_name[::-1]
             last_dot_index: int = rname.find('.')
             if last_dot_index < 0:
-                json_out_file: Path = output_dir / Path(decrypted_path.name + ".json")
+                json_out_file: Path = output_dir / Path(v_source_name + ".json")
             else:
-                json_out_file: Path = output_dir / Path(decrypted_path.name[0:-last_dot_index-1] + ".json")
+                json_out_file: Path = output_dir / Path(v_source_name[0:-last_dot_index-1] + ".json")
 
-            aifish_processing_path = decrypted_path.parent / 'processing' / decrypted_path.name
+            aifish_processing_path = decrypted_path.parent / 'processing' / v_source_name
 
-            decrypted_path.rename(aifish_processing_path)
+            # decrypted_path.rename(aifish_processing_path)
+
+            # aifish_processing_path.touch()
+            # with aifish_processing_path.open('a') as _:
+            #     pass
+
+            shutil.copy(v_source_path, aifish_processing_path)
 
             with sessionmaker() as session:
                 session.execute(sa.text("""insert into aifishdata ( video_uri, processing_uri, output_uri, status )
@@ -215,7 +209,7 @@ def enqueue(output_dir: Path, sessionmaker: SessionMaker, thalos_cam_name: str):
                             on conflict (video_uri) DO UPDATE SET status = :status ;"""), {
                                 "video_uri": str(decrypted_path.absolute()),
                                 "processing_uri": str(aifish_processing_path.absolute()),
-                                "ondeck_output": str(json_out_file.absolute()),
+                                "output_uri": str(json_out_file.absolute()),
                                 "status": "queued"
                         }
                 )
@@ -256,7 +250,7 @@ def parse(output_dir: Path, sessionmaker: SessionMaker):
                 pending_aifishdata.runtimems = (otime - ptime) * 1000.0
                 pending_aifishdata.status = "parsing"
                 session.commit()
-                
+
                 processing.rename(Path(pending_aifishdata.video_uri))
         
                 parse_json(session, video, output)
@@ -307,6 +301,20 @@ def errors(sessionmaker: SessionMaker):
         click.echo("ondeck model errors request exception: {}".format(e))
         return
 
+def ensure_is_dir(p: Path):
+    if p is None:
+        return
+    a = str(p.absolute())
+    if not p.exists() or not p.is_dir():
+        click.echo(f"folder {a} does not exist. Creating")
+        try:
+            p.mkdir()
+        except:
+            pass
+        if not p.exists() or not p.is_dir():
+            click.echo(f"Could not create folder {a}. Exiting")
+            sys.exit(1)
+
 @click.command()
 @click.option('--dbname', default=flaskconfig.get('DBNAME'))
 @click.option('--dbuser', default=flaskconfig.get('DBUSER'))
@@ -319,7 +327,12 @@ def errors(sessionmaker: SessionMaker):
 @click.option('--force_v2', is_flag=True)
 def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parsetesta, parsetestb, force_v2: bool):
 
-    output_dir = Path(output_dir)
+    video_output_dir = Path(output_dir)
+    aifish_processing_dir = video_output_dir / 'processing'
+    aifish_output_dir = video_output_dir / 'output'
+
+    ensure_is_dir(aifish_processing_dir)
+    ensure_is_dir(aifish_output_dir)
 
     if engine:
         engine = Path(engine)
@@ -341,22 +354,14 @@ def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parse
                 click.echo(v.decrypted_path)
         return
 
-    use_v2 = False
-    try:
-        r: Response = requests.get('http://127.0.0.1:5000/queueSummary')
-        use_v2 = r.status_code == 200
-        click.echo("resp: {} body: {}".format(repr(r), repr(r.json())))
-    except requests.exceptions.RequestException as e:
-        click.echo("ondeck model request exception: {}".format(e))
-
         
-    def runonce_enqueue(output_dir, sessionmaker, thalos_cam_name):
-        enqueue(output_dir, sessionmaker, thalos_cam_name)
+    def runonce_enqueue(aifish_output_dir, sessionmaker, thalos_cam_name):
+        enqueue(aifish_output_dir, sessionmaker, thalos_cam_name)
         return schedule.CancelJob
     
-    schedule.every(1).seconds.do(runonce_enqueue, output_dir, sessionmaker, thalos_cam_name)
+    schedule.every(1).seconds.do(runonce_enqueue, aifish_output_dir, sessionmaker, thalos_cam_name)
 
-    schedule.every(5).minutes.do(enqueue, output_dir, sessionmaker, thalos_cam_name )
+    schedule.every(5).minutes.do(enqueue, aifish_output_dir, sessionmaker, thalos_cam_name )
 
     def runonce_errors(sessionmaker):
         errors(sessionmaker)
@@ -366,13 +371,13 @@ def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parse
 
     schedule.every(1).minutes.do(errors, sessionmaker)
 
-    def runonce_parse(output_dir, sessionmaker):
-        parse(output_dir, sessionmaker)
+    def runonce_parse(aifish_output_dir, sessionmaker):
+        parse(aifish_output_dir, sessionmaker)
         return schedule.CancelJob
     
-    schedule.every(1).seconds.do(runonce_parse, output_dir, sessionmaker)
+    schedule.every(1).seconds.do(runonce_parse, aifish_output_dir, sessionmaker)
 
-    schedule.every(1).minutes.do(parse, output_dir, sessionmaker )
+    schedule.every(1).minutes.do(parse, aifish_output_dir, sessionmaker )
     
 
     while 1:
@@ -388,4 +393,3 @@ def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parse
 
 if __name__ == '__main__':
     main()
-
