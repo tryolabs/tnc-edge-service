@@ -65,11 +65,10 @@ def DEPRECATED_export_method_with_sqlalchemy_models(session: Session):
     except Exception as e:
         print("Error: exception in s3 uploader", e)
 
-def s3uploader(cpool: SimpleConnectionPool, boat, ver):
+def DEPRECATED_s3uploader(cpool: SimpleConnectionPool, boat, ver):
 
-    tables = [
+    DEPRECATED_tables = [
         'deckhandevents',
-        'fishaidata',
         'gpsdata',
         'internetdata',
         'deckhandevents_mostrecentlonglineevent_jsonextracted',
@@ -83,7 +82,7 @@ def s3uploader(cpool: SimpleConnectionPool, boat, ver):
     conn: psycopg2.connection = cpool.getconn()
     try:
         with conn.cursor() as cur:
-            for table in tables:
+            for table in DEPRECATED_tables:
                 # print(table)
                 cur.execute("SELECT column_name FROM information_schema.columns \
                             WHERE table_name = %s order by ordinal_position;", (table,))
@@ -123,13 +122,14 @@ def s3psqlcopyer(cpool: SimpleConnectionPool, boat, ver):
 
     tables = [
         'deckhandevents',
-        'fishaidata',
         'gpsdata',
         'internetdata',
         'deckhandevents_mostrecentlonglineevent_jsonextracted',
         'tests',
         'video_files',
+        'tracks',
         'ondeckdata',
+        'aifishdata',
     ]
 
     conn: psycopg2.connection = cpool.getconn()

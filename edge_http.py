@@ -37,12 +37,13 @@ with app.app_context():
     cfg = config.Config("alembic.ini")
     command.upgrade(cfg, "head")
     with db.engine.begin() as connection:
+        connection.execute(text("SELECT setval('aifishdata_id_seq', (SELECT MAX(id) FROM aifishdata));"))
         connection.execute(text("SELECT setval('boatschedules_id_seq', (SELECT MAX(id) FROM boatschedules));"))
         connection.execute(text("SELECT setval('deckhandevents_id_seq', (SELECT MAX(id) FROM deckhandevents));"))
-        connection.execute(text("SELECT setval('fishaidata_id_seq', (SELECT MAX(id) FROM fishaidata));"))
         connection.execute(text("SELECT setval('internetdata_id_seq', (SELECT MAX(id) FROM internetdata));"))
         connection.execute(text("SELECT setval('ondeckdata_id_seq', (SELECT MAX(id) FROM ondeckdata));"))
         connection.execute(text("SELECT setval('tests_id_seq', (SELECT MAX(id) FROM tests));"))
+        connection.execute(text("SELECT setval('tracks_id_seq', (SELECT MAX(id) FROM tracks));"))
         connection.execute(text("SELECT setval('vectors_id_seq', (SELECT MAX(id) FROM vectors));"))
 
 
@@ -57,7 +58,7 @@ admin = Admin(app, name='Risk Assesment', template_mode='bootstrap3')
 admin.add_view(RiskVectorModelView(db.session))
 admin.add_view(TestModelView(db.session))
 admin.add_view(ModelView(GpsData, db.session))
-admin.add_view(ModelView(FishAiData, db.session))
+admin.add_view(ModelView(AifishData, db.session))
 admin.add_view(ModelView(OndeckData, db.session))
 admin.add_view(InternetDataView(db.session))
 admin.add_view(ModelView(DeckhandEventRaw, db.session))
