@@ -3,7 +3,7 @@ from functools import reduce
 from model import RiskVector, Test
 
 from sqlalchemy.orm import session
-from model.fishaidata import FishAiData
+from model.aifishdata import AifishData
 
 from model.test import T
 import json
@@ -40,7 +40,7 @@ class FishAiEventsComeInFourHourBurstsVector():
         datetime_to = datetime.now(tz=timezone.utc)
         datetime_from = datetime_to - expected_timedelta
         
-        fishAiDatas = self.session.query(FishAiData).filter(FishAiData.datetime > datetime_from).filter(FishAiData.datetime < datetime_to)
+        fishAiDatas = self.session.query(AifishData).filter(AifishData.datetime > datetime_from).filter(AifishData.datetime < datetime_to)
 
         scores_per_file = []
 

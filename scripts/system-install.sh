@@ -141,6 +141,11 @@ EOF
   fi
 fi
 
+
+sudo sed -i'' -e 's/^\s*#\?\s*Storage=.*/Storage=persistent/' /etc/systemd/journald.conf
+sudo sed -i'' -e 's/^\s*#\?\s*SystemMaxUse=.*/SystemMaxUse=1G/' /etc/systemd/journald.conf
+
+
 if [ "$DO_GITHUB" ] ; then
 
   if ! [ -d "$USERHOME/actions-runner" ] ||
@@ -580,7 +585,7 @@ StartLimitIntervalSec=0
 WorkingDirectory=/root
 ExecStart=/bin/bash /root/purge-video.sh
 Restart=always
-RestartSec=600
+RestartSec=300
 
 [Install]
 WantedBy=default.target

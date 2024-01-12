@@ -75,7 +75,9 @@ def s3uploader(cpool: SimpleConnectionPool, boat, ver):
         'deckhandevents_mostrecentlonglineevent_jsonextracted',
         'tests',
         'video_files',
+        'tracks',
         'ondeckdata',
+        'aifishdata',
     ]
 
     conn: psycopg2.connection = cpool.getconn()

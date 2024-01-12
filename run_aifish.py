@@ -27,6 +27,27 @@ flaskconfig.from_object('config.defaults')
 if 'ENVIRONMENT' in os.environ:
     flaskconfig.from_envvar('ENVIRONMENT')
 
+
+# select video_files.* from video_files 
+# join (
+#     select COALESCE(max(workday_counts.workday), '1970-01-01') most_recent_active_workday 
+#     from (
+#         select date(start_datetime AT TIME ZONE 'utc' - interval '8 hours' ) as workday,
+#             count(*) as count 
+#         from video_files 
+#         where decrypted_path is not null 
+#         group by workday
+#     ) workday_counts 
+#     where workday_counts.count > 4
+# ) workdays 
+# on video_files.start_datetime >= workdays.most_recent_active_workday + time with time zone '08:00Z'
+# left join aifishdata 
+# on video_files.decrypted_path = aifishdata.video_uri 
+# where video_files.decrypted_path is not null 
+# and aifishdata.video_uri is null
+# and video_files.cam_name = 'cam1'
+# order by video_files.decrypted_datetime asc;
+
 def next_videos(session: Session, thalos_cam_name):
      workday_start_hour_at_utc_interval = '8 hours';
      workday_start_hour_at_utc_timestr = '08:00Z';
@@ -236,7 +257,7 @@ def parse(output_dir: Path, sessionmaker: SessionMaker):
         results: Query[AifishData] = session.query(AifishData).where( AifishData.status == 'queued' )
         for pending_aifishdata in results:
             
-            click.echo("found {} queued row".format(str(pending_aifishdata)))
+            # click.echo("found {} queued row".format(str(pending_aifishdata)))
 
             if pending_aifishdata.output_uri in found_aifish_files:
 
@@ -344,7 +365,8 @@ def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parse
     ModelBase.metadata.create_all(sa_engine)
 
     if parsetesta and parsetestb:
-        parse_json(sessionmaker, Path(parsetesta), Path(parsetestb))
+        with sessionmaker() as session:
+            parse_json(session, Path(parsetesta), Path(parsetestb))
         return
 
     if print_queue:
