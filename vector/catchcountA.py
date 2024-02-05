@@ -139,6 +139,86 @@ class CatchCountA():
             result.score = math.sqrt(self.ok_p_coeff - p_coeff) if p_coeff <= self.ok_p_coeff else 0
             
             self.session.commit()
+        elif self.ai_table == 'tracks':
+            tracks_rows = self.session.execute(sa.text('select t.*, v.start_datetime from tracks t \
+                                                       join video_files v on t.video_uri = v.decrypted_path \
+                                                       where v.start_datetime > :datetime_from \
+                                                       and v.start_datetime <= :datetime_to \
+                                                       order by t.datetime asc;'), {
+                                                       'datetime_from': datetime_from,
+                                                       'datetime_to': datetime_to,
+                                                       })
+            tracks: list[Track] = list(tracks_rows)
+
+            expected_videos = self.window_minutes / 5.0
+            # errored = len(list(filter(lambda x: x.status != 'done',  tracks)))
+
+            # print(f"ondeck errored: {errored}")
+
+            # print(list(map(lambda t: fmean(t.confidences), tracks)))
+
+            if self.confidence_filter:
+                # redo list of tracks, based on a higher confidence value
+                tracks = list(filter(lambda t: fmean(t.confidences) > 0.6, tracks))
+
+            fish_counts = {}
+
+            for row in tracks:
+                # if int != type(row.overallcatches):
+                #     continue
+                if row.start_datetime not in fish_counts.keys():
+                    fish_counts[row.start_datetime] = 0
+                fish_counts[row.start_datetime] += 1
+
+            fishCountS =pa.Series(fish_counts)
+            fishCountS.sort_index(inplace=True)
+
+            is_fishings = {}
+
+            for start_datetime in fish_counts.keys():
+                is_fishing = any(map(lambda elog: \
+                                    elog.systemstarthauldatetime < start_datetime and \
+                                    start_datetime < elog.systemendhauldatetime, recent_elogs))
+                is_fishings[start_datetime] = int(is_fishing)
+
+            isFishingS = pa.Series(is_fishings)
+            isFishingS.sort_index(inplace=True)
+
+            a = pa.DataFrame({
+                "fish_counts": fishCountS,
+                "is_fishings": isFishingS
+            })
+            # print(a)
+
+            # from matplotlib import pyplot
+            # pyplot.axis()
+            # pyplot.plot(isFishingS)
+            # pyplot.plot(fishCountS)
+            # pyplot.show()
+            
+            if not np.any(np.diff(isFishingS.values)):
+                # this means there is no overlap with the elogs, so the is_fishings data is a flat line
+                # running a p_coeff when one input is a flat line is meaningless
+                # so this test can't continue
+                result.detail = "elog reports a flat is_fishing variable over time. p_coeff can't work"
+                self.session.commit()
+                return
+
+            
+            if not np.any(np.diff(fishCountS.values)):
+                result.detail = "ondeck reports a flat fish count over time. p_coeff can't work"
+                self.session.commit()
+                return
+
+            p_coeffs = np.corrcoef(fishCountS.values, isFishingS.values)
+
+            print("p_coeffs:", p_coeffs)
+            p_coeff = p_coeffs[0][1]
+        
+            
+            result.score = math.sqrt(self.ok_p_coeff - p_coeff) if p_coeff <= self.ok_p_coeff else 0
+            
+            self.session.commit()
 
         return
 

@@ -152,7 +152,7 @@ def main(dbname, dbuser, output_dir, print_queue):
             break
         elif n > 0:
             # sleep exactly the right amount of time
-            print("sleeping for:", n)
+            click.echo(f'sleeping for: {n}')
             time.sleep(n)
         schedule.run_pending()
 

@@ -1,5 +1,6 @@
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from dateutil import parser
 import click
 from collections import defaultdict
 import json
@@ -115,7 +116,24 @@ def parse_json(session: Session, decrypted_path: Path, json_out_file: Path, only
 
         if len(fish_detections) == 0:
             # error handling here
-            pass
+            if only_tracks:
+                return
+            session.execute(sa.text("""insert into aifishdata ( video_uri, output_uri, 
+                                        count, detection_confidence ) 
+                            values ( :decrypted_path, :json_out_file , :cnt, :mean_c) 
+                            on conflict (video_uri) do update set 
+                            output_uri = :json_out_file,
+                            count = :cnt,
+                            detection_confidence = :mean_c
+                            ;"""), {
+                                "decrypted_path": str(decrypted_path.absolute()),
+                                "json_out_file":str(json_out_file.absolute()),
+                                "cnt": 0, 
+                                "mean_c": 0,
+                        }
+                )
+            session.commit()
+            return
 
         last_frame = max(map(lambda d: d.get('frame'), detections))
         frames = []
@@ -265,14 +283,16 @@ def parse(output_dir: Path, sessionmaker: SessionMaker):
                 processing = Path(pending_aifishdata.processing_uri)
                 output = Path(pending_aifishdata.output_uri)
 
-                ptime = processing.stat().st_mtime
                 otime = output.stat().st_mtime
+                if processing.exists():
+                    ptime = processing.stat().st_mtime
+                    pending_aifishdata.runtimems = (otime - ptime) * 1000.0
 
-                pending_aifishdata.runtimems = (otime - ptime) * 1000.0
                 pending_aifishdata.status = "parsing"
                 session.commit()
 
-                processing.rename(Path(pending_aifishdata.video_uri))
+                if processing.exists():
+                    processing.unlink()
         
                 parse_json(session, video, output)
 
@@ -322,6 +342,33 @@ def errors(sessionmaker: SessionMaker):
         click.echo("ondeck model errors request exception: {}".format(e))
         return
 
+LOST_TIME_BUFFER = timedelta(minutes=30)
+
+def lost_inprogress(sessionmaker: SessionMaker, aifish_processing_dir: Path):
+    last_start_time_s = subprocess.run('journalctl -o short-iso -u aifish_model.service | grep systemd | grep Started | tail -n 1 | sed "s/edge.*//"', shell=True, text=True, capture_output=True)
+    last_start_time_dt = parser.parse(last_start_time_s.stdout)
+
+
+    check_these = list(filter(
+        lambda f: f.is_file() 
+            and (f.name.endswith('.avi') 
+                or f.name.endswith('.mkv'))
+            and datetime.fromtimestamp(f.stat().st_mtime, tz=timezone.utc) + LOST_TIME_BUFFER < last_start_time_dt,
+        aifish_processing_dir.iterdir()
+    ))
+    if len(check_these) > 0:
+        abs_names = list(map(lambda f: str(f.absolute()), check_these))
+        with sessionmaker() as session:
+            rows: Query = session.query(AifishData) \
+                .filter(AifishData.processing_uri.in_(abs_names)) \
+                .filter(AifishData.status == 'queued')
+            for lost_file in rows.all():
+                click.echo(f'found lost file in progress - deleting: {lost_file.processing_uri}')
+                Path(lost_file.processing_uri).unlink()
+                lost_file.status = 'errored'
+                session.commit()    
+
+
 def ensure_is_dir(p: Path):
     if p is None:
         return
@@ -345,8 +392,8 @@ def ensure_is_dir(p: Path):
 @click.option('--print_queue', is_flag=True)
 @click.option('--parsetesta')
 @click.option('--parsetestb')
-@click.option('--force_v2', is_flag=True)
-def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parsetesta, parsetestb, force_v2: bool):
+@click.option('--testlostinprogress', is_flag=True)
+def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parsetesta, parsetestb, testlostinprogress):
 
     video_output_dir = Path(output_dir)
     aifish_processing_dir = video_output_dir / 'processing'
@@ -376,6 +423,10 @@ def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parse
                 click.echo(v.decrypted_path)
         return
 
+    if testlostinprogress:
+        lost_inprogress(sessionmaker, aifish_processing_dir)
+        return
+
         
     def runonce_enqueue(aifish_output_dir, sessionmaker, thalos_cam_name):
         enqueue(aifish_output_dir, sessionmaker, thalos_cam_name)
@@ -401,6 +452,14 @@ def main(dbname, dbuser, output_dir, engine, thalos_cam_name, print_queue, parse
 
     schedule.every(1).minutes.do(parse, aifish_output_dir, sessionmaker )
     
+
+    # def runonce_lost_inprogress(sessionmaker, aifish_processing_dir):
+    #     lost_inprogress(sessionmaker, aifish_processing_dir)
+    #     return schedule.CancelJob
+    # schedule.every(1).seconds.do(runonce_lost_inprogress, sessionmaker, aifish_processing_dir)
+    # schedule.every(5).minutes.do(lost_inprogress, sessionmaker, aifish_processing_dir )
+
+
 
     while 1:
         n = schedule.idle_seconds()

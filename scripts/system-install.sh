@@ -614,7 +614,7 @@ User=$USERNAME
 Group=$USERNAME
 WorkingDirectory=$USERHOME/tnc-edge-service
 Environment=ENVIRONMENT=$ENVIRONMENT
-ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 run_ondeck.py
+ExecStart=$USERHOME/tnc-edge-service/venv/bin/python3 run_ondeck.py --force_v2
 Restart=always
 RestartSec=30
 
