@@ -1,24 +1,18 @@
-
+from datetime import datetime, timezone, timedelta
+from model import Base, OndeckData, VideoFile, DeckhandEventView, Track
 from model import RiskVector, Test
-
-import sqlalchemy as sa
+from pathlib import Path
 from sqlalchemy.orm import Session
-from model import Base, OndeckData, VideoFile, DeckhandEventView
+from statistics import mean, fmean
 
 import json
-import subprocess
-
-import re
-import codecs
-import os
 import math
-
-from datetime import datetime, timezone, timedelta
-
-import pandas as pa
 import numpy as np
-
-from pathlib import Path
+import os
+import pandas as pa
+import re
+import sqlalchemy as sa
+import subprocess
 
 class CatchCountA():
 
