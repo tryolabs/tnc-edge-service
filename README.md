@@ -1,35 +1,82 @@
 
 
-# installations
+# Installation
 
-venv is suggested
+## Development environment
 
-pyp install -r requirements.txt
+Install python requirements with `pip` and `requirements.txt`. venv is suggested. 
 
-# Commands
+```
+$ python -m venv venv
+$ source venv/bin/activate
+(venv) $ pip install -r requirements.txt
+```
 
-some root files are standalone commands.
+Build your own local postgres database. Most scripts allow a custom DB name (default `edge`) and a custom username (default `edge`).
 
-- archive_reencode.py
-- box_reupload.py
-- cron_target.py
-- db.py
-- efultz-read-vectors-write-cloudwatch-metrics.py
-- gps_fetch.py
-- gps_simulator.py
-- gps_simulator_outside.py
-- reencode.py
-- run_aifish.py
-- run_ondeck.py
-- s3_uploader.py
-- test_track.py
-- vector_schedule.py
-- video_fetch.py
--
--
+## On the Edge
 
-run them
+Run `scripts/system_install.sh`
+
+Run `scripts/app_install.sh`
+
+# Folders
+
+See nested README.md
 
 # Files
+
+## Config
+
+Some files in this root folder exist to support libraries, tools, or environments:
+
+- .gitignore
+  - removes development clutter (automatically gerated files) from this git repository
+  - files beginning with `secret_` are ignored. Used for programatic access of passwords and other secrets.
+- alembic.ini
+  - Sets up the alembic library which is in the alembic folder
+- db.py
+  - Old style of DB import for root SQLAlchemy. Still in use by FlaskAdmin App
+- requirements.txt
+  - Used for python pip
+
+## Commands
+
+Some files in this root folder are standalone commands.
+
+- edge_http.py
+  - Primary entrypoint for the HTTP server on the edge.
+  - Runs a FlaskAdmin App that’s connected to the local DB
+  - Hosts the Deckhand data api
+- gps_fetch.py
+  - Primary entry point for managing gps data
+  - Runs a task on a schedule to scan THALOS network drive for gps data
+  - Copies gps data to the local postgres db
+- reencode.py
+  - Primary entry point for reencoding video files
+  - Runs a task on a schedule to reencode video files after they are copied from THALOS
+  - Uses the nvidia hardware video encoder with  GST 
+  - Reduces localdisk space used by about 5x
+- run_aifish.py
+  - Primary entry point for managing AI.Fish model input and output
+  - Runs tasks on a schedule to copy video files to model as input
+  - Runs tasks on a schedule to monitor model output files
+- run_ondeck.py
+  - Primary entry point for managing OnDeck model input and output
+  - Runs tasks on a schedule to copy video files to model as input
+  - Runs tasks on a schedule to monitor model output files
+- s3_uploader.py
+  - Primary entry point for uploading data to the cloud
+  - Runs a task on a schedule to copy postgres tables into S3
+  - Copied with the postrgres ‘COPY csv’ feature
+  - Keeps track of its latest upload in the s3uploads table
+- vector_schedule.py
+  - Primary entry point for vectors running on the boat
+  - Instantiates vectors from DB and starts the scheduler
+- video_fetch.py
+  - Primary entry point for managing video files
+  - Runs a task on a schedule to scan THALOS network drive for video files
+  - Copies video files to the local drive
+
 
 
