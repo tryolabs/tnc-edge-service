@@ -106,7 +106,8 @@ class FishAiEventsComeInFourHourBurstsVector():
 def frameToTime(starttime, video_fps, frameno ):
     return starttime + timedelta(seconds=float(frameno)/video_fps)
 
-    
+
+# test by running directly with `python3 -m vector.fname`
 if __name__ == '__main__':
     """
     Test

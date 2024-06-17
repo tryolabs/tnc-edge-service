@@ -95,6 +95,7 @@ def ping(ip):
     return data
    
 
+# test by running directly with `python3 -m vector.fname`
 if __name__ == '__main__':
 
     

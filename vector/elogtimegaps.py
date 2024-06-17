@@ -57,6 +57,7 @@ class ElogTimeGapsVector():
         return result
 
 
+# test by running directly with `python3 -m vector.fname`
 if __name__ == '__main__':
 
     from flask.config import Config as FlaskConfig

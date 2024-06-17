@@ -140,6 +140,7 @@ def intersects(seg1, seg2):
                 (seg2[0][0] <= isectx and isectx <= seg2[1][0]) 
     return between1 and between2
     
+# test by running directly with `python3 -m vector.fname`
 if __name__ == '__main__':
     a = [
         NMEAReader.parse('$GPGGA,210230,3855.4487,N,09446.0071,W,1,07,1.1,370.5,M,-29.5,M,,*7A'),
