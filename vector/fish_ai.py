@@ -19,8 +19,8 @@ class FishAiEventsComeInFourHourBurstsVector():
 
 
     # tests = relationship("Test")
-    def __init__(self, session: session, rv) -> None:
-        self.session = session
+    def __init__(self, s: session, rv) -> None:
+        self.session = s
         self.config(rv)
     
     def config(self, rv):
@@ -97,7 +97,7 @@ class FishAiEventsComeInFourHourBurstsVector():
 
 
         if len(scores_per_file) > 0:
-            t = Test(name="Higher score from a short gap between ai detection events. Test bounds from %s to %s"%dateRange, vector=self.rv, score=sum(scores_per_file))
+            t = Test(name="Higher score from a short gap between ai detection events. Test bounds from %s to %s"%(datetime_from,datetime_to), vector=self.rv, score=sum(scores_per_file))
             self.session.add(t)
             
             self.session.commit()
@@ -126,11 +126,11 @@ if __name__ == '__main__':
     ModelBase.metadata.create_all(engine)
 
     with sqlite3.connect("db.db") as conn:
-        with SessionMaker() as session:
+        with SessionMaker() as s:
             print("start of cron")
-            q = session.query(RiskVector).filter(RiskVector.name == FishAiEventsComeInFourHourBurstsVector.__name__)
+            q = s.query(RiskVector).filter(RiskVector.name == FishAiEventsComeInFourHourBurstsVector.__name__)
 
             for rv in q.all():
-                f = FishAiEventsComeInFourHourBurstsVector(session, rv)
+                f = FishAiEventsComeInFourHourBurstsVector(s, rv)
                 f.execute((datetime.now() - timedelta(weeks=500), datetime.now()))
 

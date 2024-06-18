@@ -1,7 +1,7 @@
 #!/bin/bash
 
-SCRIPTNAME="$0"
-SCRIPTDIR="$(dirname -- "$( readlink -f -- "$0")")"
+# SCRIPTNAME="$0"
+# SCRIPTDIR="$(dirname -- "$( readlink -f -- "$0")")"
 
 touch /tmp/usb.lock /tmp/network.lock
 

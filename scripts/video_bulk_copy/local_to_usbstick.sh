@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SCRIPTNAME="$0"
+# SCRIPTNAME="$0"
 SCRIPTDIR="$(dirname -- "$( readlink -f -- "$0")")"
 
 EXTHDPATH="/Volumes/Expansion 1"
