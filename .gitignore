@@ -2,12 +2,6 @@ __pycache__/
 /venv
 /.vscode
 db.db
-/config/prod.py
-/config/ericfultz.py
-/config/brancol.py
-/config/manudo.py
-/config/stpatrick.py
-/config/edge2.py
 secret*
 /videos/
 /ondeck/
