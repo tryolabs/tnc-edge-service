@@ -10,7 +10,7 @@ tnc-edge-service $ . ./venv/bin/activate
 
 # Invocation
 
-Tests should be invoked from the root of the project using `python -m` syntax.
+Tests should be invoked from the root of the project using `python -m test.python_test_filename` syntax. This syntax allows tests to load modules from the root of the project.
 
 Some tests use `click` module for intuitive command line arguments.
 
