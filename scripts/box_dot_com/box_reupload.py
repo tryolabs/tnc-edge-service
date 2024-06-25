@@ -33,6 +33,8 @@ class Token:
                 'box_subject_id': "994495604",
             }
         )
+        if resp.status_code > 299:
+            click.echo(f'{resp.status_code} {resp.headers} {resp.content}')
         j = resp.json()
         self.token_str = j['access_token']
         self.token_exp = datetime.now() + timedelta(seconds=j['expires_in']-200)
@@ -58,17 +60,19 @@ def box_folder_get_items(folder_id, offset):
     if offset:
         params['offset'] = offset
     headers={"Authorization": "Bearer "+token()}
-    print(url, params, headers)
+    # print(url, params, headers)
     resp = requests.get(
         url,
         params,
         headers=headers
     )
+    if resp.status_code > 299:
+        click.echo(f'{resp.status_code} {resp.headers} {resp.content}')
     return resp.json()
 
 def box_folder_upload_item(folder_id, fname, f):
     url = 'https://upload.box.com/api/2.0/files/content'
-
+    
     headers={"Authorization": "Bearer "+token()}
     attrs = {
         'name': fname,
@@ -86,8 +90,34 @@ def box_folder_upload_item(folder_id, fname, f):
         files=fdict,
         headers=headers
     )
+    if resp.status_code > 299:
+        click.echo(f'{resp.status_code} {resp.headers} {resp.content}')
     # click.echo(f'{resp.status_code} {resp.headers} {resp.content}')
     return resp
+
+def box_create_folder(folder_id, fname ):
+    url = 'https://api.box.com/2.0/folders'
+    # url = 'http://localhost:50001/2.0/folders'
+    
+    headers={"Authorization": "Bearer "+token(),
+             'User-Agent':'python-requests/2.32.3',
+             }
+    data = {
+        'name': fname,
+        'parent': {
+            'id': folder_id
+        }
+    }
+    # click.echo(f'{url} {attrs} {headers}')
+    resp = requests.post(
+        url,
+        json=data,
+        headers=headers
+    )
+    if resp.status_code > 299:
+        click.echo(f'{resp.status_code} {resp.headers} {resp.content}')
+    # click.echo(f'{resp.status_code} {resp.headers} {resp.content}')
+    return resp.json()
 
 @click.group()
 def main():
@@ -169,15 +199,161 @@ def iter_box_folder_copy_to_s3():
     for i in files:
         print(files)
 
+
+def box_navigate_path(path, all_box_folders):
+    """
+    Use the box.com api to find the folder associated with the path
+    
+    :param path:
+    the path to find
+    
+    :param all_box_folders:
+    a dict of box api return values. Key is box folder id. Dict is modified by method
+    
+    :return:
+    box folder object.
+    """
+    
+    if not re.match('^/([\w]([\w \.-]*\w)?/)*$', path):
+        click.echo(f'bad path: {path}')
+        sys.exit(1)
+    
+    fnames = path.split('/')[1:-1]
+    
+    def box_get_all(folder_id):
+        offset = 0
+        ret = box_folder_get_items(folder_id, offset)
+        last_req = ret
+        while last_req.get('total_count') > last_req.get('limit') + offset:
+            offset += last_req.get('limit')
+            last_req = box_folder_get_items(folder_id, offset)
+            ret.get('entries').append(last_req.get('entries'))
+        return ret
+    
+    if 0 not in all_box_folders.keys():
+        root = box_get_all('0')
+        root.update({'name': "", 'id': "0"})
+        all_box_folders[0] = root
+    
+    curr = all_box_folders[0]
+    for fname in fnames:
+        if fname in map(lambda x: x.get('name'), curr.get('entries')):
+            f = next(filter(lambda x: x.get('name') == fname, curr.get('entries')))
+            f_id = f.get('id')
+        else:
+            # have to create the folder in box
+            resp = box_create_folder(curr.get('id'), fname)
+            f_id = resp.get('id')
+            curr.get('entries').append({'type': 'folder', 'id': f_id, 'name': fname})
+
+        if f_id in all_box_folders.keys():
+            curr = all_box_folders[f_id]
+        else:
+            # have to populate the folder
+            curr = box_get_all(f_id)
+            curr.update({'name': fname, 'id':f_id})
+            all_box_folders[f_id] = curr
+    
+    return curr
+
+
+
 # python3 box_reupload.py s3-uri-to-box dp.riskedge.fish 'TNC EDGE Trip Video Files/Saint Patrick/alt_hd_upload/'
 # python3 box_reupload.py s3-uri-to-box dp.riskedge.fish 'TNC EDGE Trip Video Files/Brancol/alt_hd_upload/'
 
+def byte_range_gen(total_bytes, chunksize):
+    offset=0
+    while offset + chunksize < total_bytes:
+        r = str(offset) + "-" + str(offset + chunksize - 1)
+        # print(f'chunk {r}')
+        yield "bytes="+r
+        offset += chunksize
+    r = str(offset) + '-' + str(total_bytes - 1)
+    # print(f'chunk {r} (last)')
+    yield "bytes="+r
+
+S3_CHUNK_S = int(2*1024*1024)
+
 @main.command()
+@click.option('--dry-run', is_flag=True)
+@click.option('--done-filename', default='s3_to_box.done')
+@click.option('--max-workers', default=25)
 @click.argument('s3_bucket')
 @click.argument('s3_path_prefix')
-def s3_uri_to_box(s3_bucket, s3_path_prefix):
+@click.argument('box_name', default='/uncompressed-video/')
+def s3_uri_to_box(s3_bucket, s3_path_prefix, box_name, dry_run, done_filename, max_workers):
     print(s3_bucket, s3_path_prefix)
+    all_box_folders = dict()
+
+    box_folder = box_navigate_path(box_name, all_box_folders)
     
+    # box_boat_folders_req = box_folder_get_items(m[0].get('id'), 0)
+    # box_boat_folders = list(filter(lambda f: f.get('type') == 'folder', box_boat_folders_req.get('entries')))
+
+    already_done=[]
+    with open(done_filename) as f:
+        already_done.extend(map(lambda s: s.strip(), f.readlines()))
+    # print(already_done)
+
+    s3c = s.client('s3')
+
+    def iter_s3():
+        paginator = s3c.get_paginator('list_objects_v2')
+        for page in paginator.paginate(
+                Bucket=s3_bucket,
+                Prefix=s3_path_prefix,
+        ):
+            for c in page.get('Contents'):
+                yield c.get('Key')
+    
+    with open(done_filename, 'a') as f:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as exe1:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as exe2:
+                def doit(k):
+                    if k in already_done:
+                        # print('skipping')
+                        return
+                    
+                    k_split = k.split('/')
+                    k_path = k_split[:-1]
+                    k_fname = k_split[-1]
+
+                    box_target_path = box_name + '/'.join(k_path) + "/"
+
+                    # print("box_target_path", box_target_path)
+                    
+                    if not dry_run:
+                        o = s3.Object(s3_bucket, k)
+                        
+                        def dl_chunk(range):
+                            # print(f"dl chunk {range} start")
+                            resp = o.get(Range=range)
+                            body = resp.get('Body')
+                            b = body.read()
+                            # print(f"dl chunk {range} done")
+                            return b
+                
+                        bs = exe2.map(dl_chunk, byte_range_gen(o.content_length, S3_CHUNK_S))
+
+                        b = b''.join(bs)
+                        # resp = o.get()
+                        # with resp.get('Body') as streamingBytes:
+                            # b = streamingBytes.read()
+                        click.echo(f'downloaded {k}')
+                        box_target_f = box_navigate_path(box_target_path, all_box_folders)
+                        resp = box_folder_upload_item(box_target_f.get('id'), k_fname, b)
+                        if resp.status_code < 400:
+                            click.echo(f'uploaded {k}')
+                            f.write(k + "\n")
+                        else:
+                            click.echo('failed to upload')
+
+                # print("all s3")
+                # print(list(iter_s3()))
+                results = list(exe1.map(doit, iter_s3()))
+                print('done')
+
+
 @main.command()
 # @click.argument()
 def list_box():
