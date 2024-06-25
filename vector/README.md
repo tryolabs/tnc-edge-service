@@ -43,17 +43,24 @@ The following code makes a vector runnable as a test from the cli:
 ```
 # test by running directly with `python3 -m vector.fname`
 if __name__ == '__main__':
-  """
-  Test
-  """
-  from sqlalchemy import create_engine
-  from sqlalchemy.orm import sessionmaker
-  from model import Base as ModelBase
-  import sqlite3
-  engine = create_engine("sqlite:///db.db", echo=True)
-  SessionMaker = sessionmaker(engine)
-  ModelBase.metadata.create_all(engine)
-  with sqlite3.connect("db.db") as conn:
+  import os
+  from flask.config import Config as FlaskConfig
+  flaskconfig = FlaskConfig(root_path='')
+
+  flaskconfig.from_object('config.defaults')
+  if 'ENVIRONMENT' in os.environ:
+      flaskconfig.from_envvar('ENVIRONMENT')
+  import click
+
+  @click.command()
+  @click.option('--dbname', default=flaskconfig.get('DBNAME'))
+  @click.option('--dbuser', default=flaskconfig.get('DBUSER'))
+  def main(dbname, dbuser):
+    import sqlalchemy as sa
+    from sqlalchemy.orm import sessionmaker
+    engine = sa.create_engine("postgresql+psycopg2://%s@/%s"%(dbuser, dbname), echo=True)
+    SessionMaker = sessionmaker(engine)
+    Base.metadata.create_all(engine)
     with SessionMaker() as s:
       rv = RiskVector()
       rv.id = -1
@@ -62,6 +69,9 @@ if __name__ == '__main__':
       rv.configblob = '{"key_in_json_blob":True}'
       f = MyVector(s, rv)
       f.execute(timedelta(weeks=500))
+
+  main()
+      
 ```
 
 ## Files
