@@ -14,4 +14,5 @@ This file is the "try-it-and-see" test to prove if AWS's Cloudwatch Metrics prod
 
 - `data/*`
 
-contains various data sets that were useful during this project. These data set files are not directly referenced anywhere in this codebase.
+contains various data sets that were useful during this project. These data set files are not directly referenced anywhere in python code, but may be referenced in notebooks for data analysis.
+
