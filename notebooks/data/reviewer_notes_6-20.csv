@@ -1,0 +1,179 @@
+vessel,trip_number,set_number,set_id,date,observation,category,start_time,end_time,duration
+,,,,,,,12/30/1899 0:00:00,,
+St. Patrick,1,1,stpatrick_2024-01-03_set_01,1/7/2024,"During the hauling, there is a jump of 2 minutes between 09:02am and 09:04am. We can't see if there has been a catch or not. ",No Video,1/7/2024 9:02:00,1/7/2024 9:04:00,
+St. Patrick,1,1,stpatrick_2024-01-03_set_01,1/7/2024,"The video is unusable between 09:11am to 11:06am : the screen is black. We suppose alight breakdown because we can see that there is no light anymore on the boat and we can see a fisherman with a flishlight going to the engine machine and then the light is back again. We can't say with 100% confidence that there has been no fishing but we think there has not. Once the light back, we can see the boat sailing again (while it was not when the light was off), we suspect that once the light breakdown was over, the vessel came back to the previous longline to start fishing again at 11:26. ",Camera Blocked,1/7/2024 9:11:00,1/7/2024 11:06:00,
+St. Patrick,1,1,stpatrick_2024-01-03_set_01,1/7/2024,"The video is unusable between 09:11am to 11:06am : the screen is black. We suppose alight breakdown because we can see that there is no light anymore on the boat and we can see a fisherman with a flishlight going to the engine machine and then the light is back again. We can't say with 100% confidence that there has been no fishing but we think there has not. Once the light back, we can see the boat sailing again (while it was not when the light was off), we suspect that once the light breakdown was over, the vessel came back to the previous longline to start fishing again at 11:26am. ",Abnormal Haul,1/7/2024 9:11:00,1/7/2024 11:26:00,
+St. Patrick,1,1,stpatrick_2024-01-03_set_01,1/7/2024,"During the hauling, there is a jump of 2 minutes  between 12:18pm to 12:40pm .  We suspect only one mahi mahi caught during that time because when the video comes back again, we can see the mahi mahi put aside the shark caught before video out. ",No Video,1/7/2024 12:18:00,1/7/2024 12:40:00,
+St. Patrick,1,2,stpatrick_2024-01-03_set_02,1/10/2024,Lack of video on 01/10 between 12:36pm and 12:44pm,No Video,1/10/2024 12:36:00,1/10/2024 12:44:00,
+Brancol,1,3,brancol_2024-01-05_set_03,1/14/2024,Line tangled at +8.451 ; -87.955 10:13am,Haul Stop,1/14/2024 10:13:00,,
+Brancol,1,3,brancol_2024-01-05_set_03,1/14/2024,"CAMERA1 suht down between 10:23 am and 10:42 am. When the camera came back, the hauling was stoped and the fishermen came back at 10:49 am at +8.4821512 ; -87.9861111",No Video,1/14/2024 10:23:00,1/14/2024 10:42:00,
+St. Patrick,1,3,stpatrick_2024-01-03_set_03,1/15/2024,Stop of hauling between 09:37 am to 11:15 am,Haul Stop,1/15/2024 9:37:00,1/15/2024 11:15:00,
+Brancol,1,4,brancol_2024-01-05_set_04,1/16/2024,"CAMERA 1 shut down between 5:35 am and 5:45 am. When the camera came back, the hauling was finished. We don't have the data of CAMERA 2 yet. Can be discussed when we'll have the CAMERA 2 data available. ",No Video,1/16/2024 5:35:00,1/16/2024 5:45:00,
+Brancol,1,5,brancol_2024-01-05_set_05,1/17/2024,line tangled at +9.585 ; -86.448 (7:52am),Haul Stop,1/17/2024 7:52:00,,
+Brancol,1,5,brancol_2024-01-05_set_05,1/17/2024,line tangled at +9.536 ; -86.375 (9:24am),Haul Stop,1/17/2024 9:24:00,,
+Brancol,1,5,brancol_2024-01-05_set_05,1/17/2024,line tangled at +9.529 ; -86.357 (9:49am),Haul Stop,1/17/2024 9:49:00,,
+Brancol,1,5,brancol_2024-01-05_set_05,1/17/2024,line tangled at +9.545 ; -86.333 (10:55am),Haul Stop,1/17/2024 10:55:00,,
+Brancol,1,5,brancol_2024-01-05_set_05,1/17/2024,line tangled at +9.542 ; -86.314 (11:34am),Haul Stop,1/17/2024 11:34:00,,
+St. Patrick,1,4,stpatrick_2024-01-03_set_04,1/17/2024,Lack of video the 17th of January between 01:01 pm and 01:05 pm,No Video,1/17/2024 13:01:00,1/17/2024 13:05:00,
+St. Patrick,1,4,stpatrick_2024-01-03_set_04,1/17/2024,The haul stops between 01:01pm and 01:31pm.,Haul Stop,1/17/2024 13:01:00,1/17/2024 13:31:00,
+Brancol,1,5,brancol_2024-01-05_set_05,1/17/2024,line tangled at +9.504 ; -86.258 (1:28pm)  ,Haul Stop,1/17/2024 13:28:00,,
+Brancol,1,6,brancol_2024-01-05_set_06,1/19/2024,"Hauling stopped between 1:07 am (+8.678 ; -84.602 ) and 9:29 am (+8.690, -84.594)        ",Haul Stop,1/19/2024 1:07:00,1/19/2024 9:29:00,
+St. Patrick,1,5,stpatrick_2024-01-03_set_05,1/20/2024,Lack of video between 12:28 pm and 12:36 pm (20/01/2024) ,No Video,1/20/2024 12:28:00,1/20/2024 12:36:00,
+Brancol,1,7,brancol_2024-01-05_set_07,1/21/2024,The hauling finish time on the logbook is wrong ,Elog Incorrect,1/21/2024 10:47:00,1/21/2024 11:58:56,
+Brancol,1,8,brancol_2024-01-05_set_08,1/22/2024,Hauling stopped between 6:50 am (+8.338 ; -84.343) and 7:10 am (+8.319 ; -84.321),Haul Stop,1/22/2024 6:50:00,1/22/2024 7:10:00,
+Brancol,1,8,brancol_2024-01-05_set_08,1/22/2024,"Cameras hidden at the beginning of setting : we indicated 12:06pm in the ""setting table"" regarding the logbook but we have the video only at 12:07 pm and the setting has already started",Camera Blocked,1/22/2024 12:06:00,1/22/2024 12:07:00,
+St. Patrick,1,6,stpatrick_2024-01-03_set_06,1/23/2024,Start and end time of hauling is wrong on the logbook. Elog reported much later haul start.,Elog Incorrect,1/23/2024 5:36:00,1/23/2024 11:23:12,
+St. Patrick,1,6,stpatrick_2024-01-03_set_06,1/23/2024,Lack of video between 07:58am and 08:03 am. (23/01/2024),No Video,1/23/2024 7:58:00,1/23/2024 8:03:00,
+St. Patrick,1,6,stpatrick_2024-01-03_set_06,1/23/2024,"Start and end time of hauling is wrong on the logbook. Elog reported haul end and hour later, haul duration is only 6 minutes. ",Elog Incorrect,1/23/2024 10:22:00,1/23/2024 11:23:18,
+Brancol,1,9,brancol_2024-01-05_set_09,1/23/2024,Line tangled at 11:38am (+8.236 ; -83.878)        ,Gear Issue,1/23/2024 11:38:00,,
+St. Patrick,1,7,stpatrick_2024-01-03_set_07,1/23/2024,Break during the hauling between 12:52 pm and 07:28am (24/01/2024),Haul Stop,1/23/2024 12:52:00,1/24/2024 7:28:00,
+St. Patrick,1,6,stpatrick_2024-01-03_set_06,1/23/2024,"End time of the setting different in the logbook. It ends at 03:21pm, not 03:53pm. ",Elog Incorrect,1/23/2024 15:21:00,1/23/2024 15:53:00,
+Brancol,1,10,brancol_2024-01-05_set_10,1/24/2024,Hauling stopped between 11:55 am (+8.474 ; -84.289) and 12:19 pm (+8.447 ; -84.267),Haul Stop,1/24/2024 11:55:00,1/24/2024 12:19:00,
+Brancol,1,10,brancol_2024-01-05_set_10,1/24/2024,"Something stucked under the vessel at 12:53 pm (+8.435 ; -84.250), a fisherman dived to remove it",Other,1/24/2024 12:53:00,,
+Brancol,1,10,brancol_2024-01-05_set_10,1/24/2024,Hauling stopped between 2:27 pm (+8.366 ; -84.162) and 3:22 pm (+8.352 ; -84.125),Haul Stop,1/24/2024 14:27:00,1/24/2024 15:22:00,
+St. Patrick,1,8,stpatrick_2024-01-03_set_08,1/25/2024,Break during the hauling between 1:31 am and 6:14 am (25/01/2024) ,Haul Stop,1/25/2024 1:31:00,1/25/2024 6:14:00,
+St. Patrick,1,8,stpatrick_2024-01-03_set_08,1/25/2024,Lack of video between 6:33 am and 6:50 am (25/01/2024) ,No Video,1/25/2024 6:33:00,1/25/2024 6:50:00,
+St. Patrick,1,8,stpatrick_2024-01-03_set_08,1/25/2024,Lack of video between 6:52 am and 7:00 am (25/01/2024) ,No Video,1/25/2024 6:52:00,1/25/2024 7:00:00,
+St. Patrick,1,8,stpatrick_2024-01-03_set_08,1/25/2024,Break during the hauling between 7:49 am and 8:26 am (25/01/2024),Haul Stop,1/25/2024 7:49:00,1/25/2024 8:26:00,
+St. Patrick,1,9,stpatrick_2024-01-03_set_09,1/25/2024,Lack of video between 03:18 pm and 03:23 pm (26/01/2024) ,No Video,1/26/2024 15:18:00,1/26/2024 15:23:00,
+St. Patrick,1,9,stpatrick_2024-01-03_set_09,1/26/2024,Lack of video between 03:18 pm and 03:23 pm (26/01/2024) ,No Video,1/26/2024 15:18:00,1/26/2024 15:23:00,
+St. Patrick,1,9,stpatrick_2024-01-03_set_09,1/25/2024,Lack of video between 03:27 pm and 03:30 pm (26/01/2024),No Video,1/26/2024 15:27:00,1/26/2024 15:30:00,
+St. Patrick,1,9,stpatrick_2024-01-03_set_09,1/26/2024,Lack of video between 03:27 pm and 03:30 pm (26/01/2024),No Video,1/26/2024 15:27:00,1/26/2024 15:30:00,
+St. Patrick,1,10,stpatrick_2024-01-03_set_10,1/27/2024,"Lack of video between 16:28 pm and 16:52 pm (27/01/2024). During teh lack of video, there is the end of the hauling. Thus, we don't have the exact time and position of the end of the hauling, the data we gave is the last time/posiiton we have before we see the hauling is over. ",No Video,1/27/2024 16:28:00,1/27/2024 16:52:00,
+Brancol,2,0,,2/3/2024,Beginning of  camera 2 at 4:46pm (03/02).,,2/3/2024 16:46:00,,
+Brancol,2,0,,2/3/2024,Beginning of camera 1 at 4:50pm (03/02),,2/3/2024 16:50:00,,
+Brancol,2,1,brancol_2024-02-03_set_01,2/5/2024,Hauling stoped between 01:24pm and 1:54pm (filling the hold of part of the catch).,Haul Stop,2/5/2024 13:24:00,2/5/2024 13:54:00,0:30:00
+Brancol,2,2,brancol_2024-02-03_set_02,2/6/2024,No video fron 11:28 pm (06/02) to 01:15am (07/02) during hauling. ,No Video,2/6/2024 23:28:00,2/7/2024 1:15:00,
+St. Patrick,2,1,stpatrick_2024-02-03_set_01,2/7/2024,Break during the hauling between 12:04am and 10:42am (07/02/2024,No Video,2/7/2024 0:04:00,2/7/2024 10:42:00,
+Brancol,2,2,brancol_2024-02-03_set_02,2/7/2024,Break in the hauling between 02:40 am and 03:31 am for a break and puting aside the fish.,Haul Stop,2/7/2024 2:40:00,2/7/2024 3:31:00,0:51:00
+St. Patrick,2,1,stpatrick_2024-02-03_set_01,2/7/2024,Lack of video during the hauling between 12:04pm and 12:21pm (07/02/2024) ,No Video,2/7/2024 12:04:00,2/7/2024 12:21:00,
+St. Patrick,2,2,stpatrick_2024-02-03_set_02,2/7/2024,Lack of video during the setting between 06:24pm and 07:04 (07/02/2024,No Video,2/7/2024 18:24:00,,
+Brancol,2,3,brancol_2024-02-03_set_03,2/8/2024,Lack of video between 10:04 am and 10:30 am (08/02/2024),No Video,2/8/2024 10:04:00,2/8/2024 10:30:00,
+St. Patrick,2,2,stpatrick_2024-02-03_set_02,2/8/2024,Lack of video during the hauling between 11:54am and 12:11pm (08/02/2024),No Video,2/8/2024 11:54:00,2/8/2024 12:11:00,
+Brancol,2,4,brancol_2024-02-03_set_04,2/9/2024,Start of settinf not available. We wrote the start information regarding when the camera is not blocked anymore. ,Camera Blocked,2/8/2024 19:19:00,2/8/2024 19:20:00,
+Brancol,2,4,brancol_2024-02-03_set_04,2/9/2024,Hauling stoped between  02:38pm and 02:40pm,Haul Stop,2/9/2024 14:38:00,2/9/2024 14:40:00,0:02:00
+Brancol,2,4,brancol_2024-02-03_set_04,2/9/2024, Hauling also stopped between 04:37pm and 05:09pm because of knots,Haul Stop,2/9/2024 16:37:00,2/9/2024 17:09:00,0:32:00
+Brancol,2,4,brancol_2024-02-03_set_04,2/9/2024, Hauling also stopped between 05:31pm and 05:53pm because of knots,Haul Stop,2/9/2024 17:31:00,2/9/2024 17:53:00,0:22:00
+Brancol,2,4,brancol_2024-02-03_set_04,2/9/2024," After the knot of 05:53pm, the hauling started back but with no catch because of lots of knots",Abnormal Catch,2/9/2024 17:53:00,2/9/2024 18:20:00,
+Brancol,2,5,brancol_2024-02-03_set_05,2/10/2024,Hauling stoped between 12:49pm and 01:02pm (cleaning). ,Haul Stop,2/10/2024 12:49:00,2/10/2024 13:02:00,0:13:00
+St. Patrick,2,3,stpatrick_2024-02-03_set_03,2/10/2024,Lack of video during the hauling between 01:48pm and 01:57pm (10/02/2024),No Video,2/10/2024 13:48:00,2/10/2024 13:57:00,
+Brancol,2,5,brancol_2024-02-03_set_05,2/10/2024,Hauling stoped between 01:50 pm and 03:10pm (knot of the line with 2 catch inside : one ray and one swordfish). ,Haul Stop,2/10/2024 13:50:00,2/10/2024 15:10:00,1:20:00
+Brancol,2,5,brancol_2024-02-03_set_05,2/10/2024,Hauling stoped between 03:35pm and 03:40pm (knot). ,Haul Stop,2/10/2024 15:35:00,2/10/2024 15:40:00,0:05:00
+Brancol,2,5,brancol_2024-02-03_set_05,2/10/2024,Hauling stoped between 04:01pm and 04:13pm (knot with only one catch inside : one marlin).,Haul Stop,2/10/2024 16:01:00,2/10/2024 16:13:00,0:12:00
+St. Patrick,2,4,stpatrick_2024-02-03_set_04,2/11/2024,Lack of video during the hauling between 12:49pm and 01:06pm (11/02/2024) ,No Video,2/11/2024 12:49:00,2/11/2024 13:06:00,
+Brancol,2,6,brancol_2024-02-03_set_06,2/11/2024,Hauling stopped between 03:30pm and 03:35pm because of a knot,Haul Stop,2/11/2024 15:30:00,2/11/2024 15:35:00,0:05:00
+St. Patrick,2,5,stpatrick_2024-02-03_set_05,2/13/2024,Break during the hauling between 1:44 am and 9:03 am (13/02/2024),Haul Stop,2/13/2024 1:44:00,2/13/2024 9:03:00,
+Brancol,2,7,brancol_2024-02-03_set_07,2/13/2024,No catch between the begining of hauling at 11:55am and 2:00pm : ,Abnormal Catch,2/13/24 11:55 AM,2/13/2024 14:00:00,
+Brancol,2,7,brancol_2024-02-03_set_07,2/13/2024,A difficult FO because of numerous knots,Abnormal Haul,2/13/2024 11:55:00,2/13/2024 19:30:00,
+Brancol,2,7,brancol_2024-02-03_set_07,2/13/2024,- hauling stopped between 12:18pm and 12:24pm because of knots. ,Haul Stop,2/13/2024 12:18:00,2/13/2024 12:24:00,0:06:00
+St. Patrick,2,5,stpatrick_2024-02-03_set_05,2/13/2024,Lack of video during the hauling between 12:24 pm and 12:44 pm (13/02/2024) ,No Video,2/13/2024 12:24:00,2/13/2024 12:44:00,
+Brancol,2,7,brancol_2024-02-03_set_07,2/13/2024, between 01:02pm and 01:15pm because of knots. ,Haul Stop,2/13/2024 13:02:00,2/13/2024 13:15:00,0:13:00
+Brancol,2,7,brancol_2024-02-03_set_07,2/13/2024,- hauling stopped between 01:16pm and 01:32pm for lunch break. ,Haul Stop,2/13/2024 13:16:00,2/13/2024 13:32:00,0:16:00
+Brancol,2,7,brancol_2024-02-03_set_07,2/13/2024,The first catch is the SWO which took 17 minutes before being brought onboard (between 01:43pm and 02:00pm). ,Abnormal Catch,2/13/2024 13:43:00,2/13/2024 14:00:00,
+St. Patrick,2,5,stpatrick_2024-02-03_set_05,2/13/2024,"Video stoped at 02:09 pm before the end of the hauling, that is the time we registered as being hauling finish time. It stopped until beginning of next hauling.",No Video,2/13/2024 14:09:00,2/13/2024 14:10:00,
+Brancol,2,7,brancol_2024-02-03_set_07,2/13/2024,Hauling stopped between 02:42pm and 03:01pm  (cleaning). ,Haul Stop,2/13/2024 14:42:00,2/13/2024 15:01:00,0:19:00
+St. Patrick,2,6,stpatrick_2024-02-03_set_06,2/13/2024,"Lack of video from end of hauling of last FO until beginning of this hauling. Thus, we don't have the data about setting for this FO. (Using elog set times for issue time)",No Video,2/13/2024 15:26:54,2/13/2024 18:46:59,
+Brancol,2,7,brancol_2024-02-03_set_07,2/13/2024,Hauling stopped between 03:30pm and 03:54pm (knot of the line with one YFT inside) ,Haul Stop,2/13/2024 15:30:00,2/13/2024 15:54:00,0:24:00
+Brancol,2,7,brancol_2024-02-03_set_07,2/13/2024, between 04:44pm and 04:51pm (cleaning). ,Haul Stop,2/13/2024 16:44:00,2/13/2024 16:51:00,0:07:00
+Brancol,2,7,brancol_2024-02-03_set_07,2/13/2024,"Hauling also stopped between 05:09pm and 05:15pm, no visible reason.",Haul Stop,2/13/2024 17:09:00,2/13/2024 17:15:00,0:06:00
+Brancol,2,7,brancol_2024-02-03_set_07,2/13/2024, between 05:43pm and 06:02pm (knot with one catch inside which escaped) ,Haul Stop,2/13/2024 17:43:00,2/13/2024 18:02:00,0:19:00
+Brancol,2,7,brancol_2024-02-03_set_07,2/13/2024, between 06:11pm and 06:19pm (knot) ,Haul Stop,2/13/2024 18:11:00,2/13/2024 18:19:00,0:08:00
+Brancol,2,7,brancol_2024-02-03_set_07,2/13/2024, between 06:33pm and 06:44pm (knot) ,Haul Stop,2/13/2024 18:33:00,2/13/2024 18:44:00,0:11:00
+Brancol,2,7,brancol_2024-02-03_set_07,2/13/2024, between 07:22pm and 07:27pm (knot). ,Haul Stop,2/13/2024 19:22:00,2/13/2024 19:27:00,0:05:00
+St. Patrick,2,6,stpatrick_2024-02-03_set_06,2/14/2024,Lack of video during the hauling between 12:32 pm and 12:35 pm (14/02/2024),No Video,2/14/2024 12:32:00,2/14/2024 12:35:00,
+St. Patrick,2,6,stpatrick_2024-02-03_set_06,2/14/2024,break during the hauling between 02:18 pm and 03:07 pm (14/02/2024),Haul Stop,2/14/2024 14:18:00,2/14/2024 15:07:00,
+St. Patrick,2,0,,2/14/2024,One fisherman is throwing sharks fins to the water on 14/02/2024 at 04:39pm. ,SSI Interaction,2/14/2024 16:39:00,,
+St. Patrick,2,0,,2/15/2024,There is a transhipment on 15/02/2024 at 12:20am. ,Transhipment,2/15/2024 0:20:00,,
+Brancol,2,8,brancol_2024-02-03_set_08,2/15/2024,Hauling stopped between 01:09am (15/02/24) and 01:27am (15/02/2024) : lunch break.         ,Haul Stop,2/15/2024 1:09:00,2/15/2024 1:27:00,0:18:00
+St. Patrick,2,7,stpatrick_2024-02-03_set_07,2/16/2024,Lack of video during the hauling between 12:54 pm and 01:07 pm (16/02/2024),Haul Stop,2/16/2024 12:54:00,2/16/2024 13:07:00,
+Brancol,2,9,brancol_2024-02-03_set_09,2/17/2024,Camera hidden at the beginning of hauling (probably an omission because no species has been taken before and the fishermen are preparing themselves) : the time and position we got are the available data when the camera was available again. ,Camera Blocked,2/17/2024 10:07:00,2/17/2024 11:07:00,
+Brancol,2,9,brancol_2024-02-03_set_09,2/17/2024,Hauling stopped between 12:44pm and 01:25pm (lunch break). ,Haul Stop,2/17/2024 12:44 PM,2/17/2024 13:25:00,0:41:00
+Brancol,2,9,brancol_2024-02-03_set_08,2/17/2024,Hauling stopped between 01:32pm and 01:36pm (line knots). ,Haul Stop,2/17/2024 13:32:00,2/17/2024 13:36:00,0:04:00
+Brancol,2,9,brancol_2024-02-03_set_07,2/17/2024,Hauling stopped between 01:41pm and 01:47pm  (line knots).,Haul Stop,2/17/2024 13:41:00,2/17/2024 13:41:00,0:00:00
+St. Patrick,2,8,stpatrick_2024-02-03_set_08,2/17/2024,Video break between 02:20pm and 02:25pm (17/02/2024),No Video,2/17/2024 14:20:00,2/17/2024 14:25:00,
+Brancol,2,9,brancol_2024-02-03_set_09,2/17/2024,Camera intentionnally hidden between 02:40pm and 02:41pm while a catch is being brought onboard & intentionnally hidden again when it was the moment to clean deck and move this catch to the hold -> We see the order given by one fisherman to hide the 2 cameras. --> wish to hide a catch ? (forbidden species ?). ,Camera Blocked,2/17/2024 2:40 PM,2/17/2024 14:41:00,
+Brancol,2,9,brancol_2024-02-03_set_09,2/17/2024,Hauling stopped between 03:41pm and 03:54pm (line knot with one SFA inside).,Haul Stop,2/17/2024 15:41:00,2/17/2024 15:54:00,0:13:00
+Brancol,2,9,brancol_2024-02-03_set_06,2/17/2024,Hauling stopped between 04:49pm and 05:00pm (line knots).,Haul Stop,2/17/2024 16:49:00,2/17/2024 17:50:00,1:01:00
+Brancol,2,10,brancol_2024-02-03_set_10,2/18/2024,Video interrupted at the end of the setting between 10:20pm et 10:35pm (time and position retained for the Setting table). ,No Video,2/18/2024 22:20:00,2/18/2024 22:35:00,
+St. Patrick,2,9,stpatrick_2024-02-03_set_09,2/19/2024,Break during hauling between 5:35am and 10:31am (19/02),Haul Stop,2/19/2024 5:35:00,2/19/2024 10:31:00,
+Brancol,2,10,brancol_2024-02-03_set_10,2/19/2024,"Hauling stopped between 02:20pm and 04:21pm after an observation with the binoculars and the use of a surfcasting gear, lunch break at the same time, no capture with this gear.",Haul Stop,2/19/2024 14:20:00,2/19/2024 16:21:00,2:01:00
+Brancol,2,11,brancol_2024-02-03_set_11,2/19/2024,"No image at the beginning of the setting, the datetime and position indicated in the setting table are those available. ",No Video,2/19/2024 21:12:58,2/19/2024 21:19:00,
+St. Patrick,2,9,stpatrick_2024-02-03_set_09,2/19/2024,"One small line is put in the warer at 11:15pm on 19/02 but the cameras are off after, we can't see the catches, if there are any.",No Video,2/19/2024 23:15:00,,
+Brancol,2,11,brancol_2024-02-03_set_11,2/20/2024,Hauling stopped between 02:08pm et 02:23pm (lunch break).,Haul Stop,2/20/2024 14:08:00,2/20/2024 14:23:00,0:15:00
+Brancol,2,12,brancol_2024-02-03_set_12,2/21/2024,Hauling stopped between 02:06pm and 02:23pm (lunch break). ,Haul Stop,2/21/2024 14:06:00,2/21/2024 14:23:00,0:17:00
+St. Patrick,2,10,stpatrick_2024-02-03_set_10,2/21/2024,"21/02 at 02:12pm, lack of 5 minutes of video on both cameras",No Video,2/21/2024 14:12:00,,
+Brancol,2,12,brancol_2024-02-03_set_12,2/21/2024,Hauling stopped between 03:07pm à 03:19pm (knot with a catch inside (YFT)).,Haul Stop,2/21/2024 15:07:00,2/21/2024 15:19:00,0:12:00
+Brancol,2,12,brancol_2024-02-03_set_12,2/21/2024,Hauling stopped between 03:23pm and 03:25pm (winch manoeuvre). 	,Haul Stop,2/21/2024 15:23:00,2/21/2024 15:25:00,0:02:00
+Brancol,2,13,brancol_2024-02-03_set_13,2/21/2024,"No image at the beginning of the setting, the datetime and position indicated in the setting table are those available. ",No Video,2/21/2024 21:17:00,2/21/2024 21:18:00,0:01:00
+Brancol,2,13,brancol_2024-02-03_set_13,2/22/2024,Hauling stopped between 12:52pm and 01:02pm (knot of the line stuck under the vessel). ,Haul Stop,2/22/2024 12:52:00,2/22/2024 13:02:00,0:10:00
+Brancol,2,13,brancol_2024-02-03_set_13,2/22/2024,Hauling stopped between 01:16pm and 01:26pm (knot of teh line with one undeterminated catch released in the water).,Haul Stop,2/22/2024 13:16:00,2/22/2024 13:26:00,0:10:00
+Brancol,2,13,brancol_2024-02-03_set_13,2/22/2024,Hauling stopped between 01:59pm and 02:07pm (cleaning). ,Haul Stop,2/22/2024 13:59:00,2/22/2024 14:07:00,0:08:00
+Brancol,2,13,brancol_2024-02-03_set_13,2/22/2024,Hauling stopped between 02:14pm and 02:32pm (lunch break). ,Haul Stop,2/22/2024 14:14:00,2/22/2024 14:32:00,0:18:00
+Brancol,2,13,brancol_2024-02-03_set_13,2/22/2024,Hauling stopped between 04:13pm and 04:17pm (knot of the line at the back of the vessel with one undeterminated catch releases in the water).,Haul Stop,2/22/2024 16:13:00,2/22/2024 16:17:00,0:04:00
+Brancol,2,14,brancol_2024-02-03_set_14,2/22/2024,"They are using another gear : a line with lures. We chose to write down what we could see for this specific gear even if it was not usual longline, if needed on your side.
+
+Other gear used (line with lures). First image available at 06:33pm while the FO had already started with 2 catch of tunas.",Other Gear,2/22/2024 18:33:00,2/22/2024 22:40:00,4:07:00
+St. Patrick,2,11,stpatrick_2024-02-03_set_11,2/23/2024,No video between 02:00pm and 02:05pm (23/02),No Video,2/23/2024 14:00:00,2/23/2024 14:05:00,
+St. Patrick,2,12,stpatrick_2024-02-03_set_12,2/24/2024,No video between 01:10pm and 01:15 pm (24/02),No Video,2/24/2024 13:10:00,2/24/2024 13:15:00,
+Brancol,2,17,brancol_2024-02-03_set_17,2/25/2024,troll fishing,Other Gear,2/25/2024 12:16:00,2/25/2024 13:09:00,0:53:00
+St. Patrick,2,13,stpatrick_2024-02-03_set_13,2/25/2024,No video between 01:00pm and 01:05pm (25/02/2024).,No Video,2/25/2024 13:00:00,2/25/2024 13:05:00,
+Brancol,2,16,brancol_2024-02-03_set_16,2/25/2024,No video of CAM1 at 06:25pm (25/02) . Both cameras switch on again when the hauling is over (at 06:35pm). The time indicated here is the last data we have regarding the end of the hauling.,No Video,2/25/2024 18:25:00,2/25/2024 18:35:00,0:10:00
+Brancol,2,16,brancol_2024-02-03_set_16,2/25/2024,No video of CAM2 at 06:30 pm (25/02). Both cameras switch on again when the hauling is over (at 06:35pm).,No Video,2/25/2024 18:30:00,2/25/2024 18:35:00,0:05:00
+Brancol,2,16,brancol_2024-02-03_set_16,2/25/2024,Cameras hidden at 07:02pm (25/02) until 12:53pm (26/02),Camera Blocked,2/25/2024 19:02:00,2/26/2024 12:53:00,17:51:00
+Brancol,2,18,brancol_2024-02-03_set_18,2/26/2024,troll fishing.,Other Gear,2/26/2024 13:03:00,2/26/2024 14:04:00,1:01:00
+Brancol,2,0,,2/26/2024,There is troll fishing on 26/02/2024 at 02:10pm,Other Gear,2/26/2024 14:10:00,,
+Brancol,2,0,,2/26/2024,the camera is hidden at 02:14pm . ,Camera Blocked,2/26/2024 14:14:00,,
+Brancol,2,0,,2/26/2024,the camera is hidden at 02:14pm and the camera is switched off for good at 10:45pm the same day.,Camera Blocked,2/26/2024 14:14:00,2/26/2024 22:45:00,8:31:00
+St. Patrick,1,10,stpatrick_2024-01-03_set_10,1/27/2024,"This FO wasn’t in the logbook and the crew stopped the recording while they were still at sea, far from the coast, so we don’t have the exact date of the end of the trip.",No Elog,,,
+St. Patrick,1,9,stpatrick_2024-01-03_set_09,1/25/2024,"Lots of tunas, and 2 catch which were released with “no apparent reason”",Abnormal Catch,,,
+Brancol,2,4,brancol_2024-02-03_set_04,2/9/2024,This FO was not mentioned in the logbook.,No Elog,,,
+St. Patrick,1,3,stpatrick_2024-01-03_set_03,1/15/2024,FO not mentioned in the logbook ,No Elog,,,
+Brancol,1,2,brancol_2024-01-05_set_02,1/12/2024,The line got tangled at GPS +7.215 ; -90.043,Gear Issue,,,
+Brancol,2,17,brancol_2024-02-03_set_17,2/25/2024,FO not in le logbook,No Elog,,,
+Brancol,2,18,brancol_2024-02-03_set_18,2/26/2024,"FO not in le logbook, ",No Elog,,,
+St. Patrick,3,1,stpatrick_2024-03-08_set_1,3/12/2024,Break during hauling from 07:26am to 10:59am,Haul Stop,3/12/2024 7:26:00,3/12/2024 10:59:00,3:33:00
+St. Patrick,3,5,stpatrick_2024-03-08_set_5,3/20/2024,Cameras off between 3:50am and 8:27am (break during hauling),No Video,3/20/2024 3:50:00,3/20/2024 8:27:00,4:37:00
+St. Patrick,3,5,stpatrick_2024-03-08_set_5,3/20/2024,(break during hauling). Cameras off between 3:50am  Hauling starts back at 08:53am. ,Haul Stop,3/20/2024 3:50:00,3/20/2024 8:53:00,5:03:00
+St. Patrick,3,5,stpatrick_2024-03-08_set_5,3/20/2024,"Then, lunch break during hauling between 12:06pm and 12:57pm. ",Haul Stop,3/20/2024 12:06:00,3/20/2024 12:57:00,0:51:00
+St. Patrick,3,6,stpatrick_2024-03-08_set_6,3/22/2024,Camera off during 01:45pm and 01:50pm (22/03) -> don't see if any other catch during this time of hauling,Camera Off,3/22/2024 13:45:00,3/22/2024 13:50:00,0:05:00
+St. Patrick,3,8,stpatrick_2024-03-08_set_8,3/25/2024,Break during hauling from 9:42am to 11:13am ,Haul Stop,3/25/2024 9:42:00,3/25/2024 11:13:00,1:31:00
+St. Patrick,3,8,stpatrick_2024-03-08_set_8,3/25/2024,"Branch attached in the longline (not put at sea by the crew, randomly attached) which is used as a FAD : the crew fishes arounf it with a small line (25/03 at 01:06pm).  ",FAD Used,3/25/2024 13:06:00,,
+St. Patrick,3,8,stpatrick_2024-03-08_set_8,3/25/2024,Break during hauling  from 01:17pm and 02:21pm. ,Haul Stop,3/25/2024 13:17:00,3/25/2024 14:21:00,1:04:00
+St. Patrick,3,9,stpatrick_2024-03-08_set_9,3/27/2024,Break during hauling from 12:40pm to 01:31pm.,Haul Stop,3/27/2024 12:40:00,3/27/2024 13:31:00,0:51:00
+St. Patrick,3,10,stpatrick_2024-03-08_set_10,3/30/2024,Break during hauling from 01:43pm to 02:28pm,Haul Stop,3/30/2024 13:43:00,3/30/2024 14:28:00,0:45:00
+St. Patrick,3,11,stpatrick_2024-03-08_set_11,4/2/2024,Break during hauling from 01:10pm to 02:03pm,Haul Stop,4/2/2024 13:10:00,4/2/2024 14:03:00,0:53:00
+St. Patrick,3,11,stpatrick_2024-03-08_set_11,4/2/2024,Break during hauling from 03:40pm to 04:30pm,Haul Stop,4/2/2024 15:40:00,4/2/2024 16:30:00,0:50:00
+St. Patrick,3,12,stpatrick_2024-03-08_set_12,4/3/2024,FO not in the logbook,No Elog,,,0:00:00
+St. Patrick,3,12,stpatrick_2024-03-08_set_12,4/3/2024,Cameras off during hauling from 12:45pm to 12:50pm (03/04)03/04.,No Video,4/3/2024 12:45:00,4/3/2024 12:50:00,0:05:00
+St. Patrick,3,13,stpatrick_2024-03-08_set_13,4/5/2024,Break during hauling from 02:39pm to 03:05pm,Haul Stop,4/5/2024 14:39:00,4/5/2024 15:05:00,0:26:00
+Brancol,3,1,brancol_2024-03-05_set_1,3/7/2024,Camera 1 has been moved : too high to see the catch.,Camera Blocked,,,
+Brancol,3,2,brancol_2024-03-05_set_2,3/8/2024,12:23pm (08/03) : a member of the crew jumped in the water at the back of the vessel (something knocked in the helix ?),Other,3/8/2024 12:23:00,,
+Brancol,3,2,brancol_2024-03-05_set_2,3/8/2024,Break during hauling (01:38pm to 01:55pm for lunch break),Haul Stop,3/8/2024 13:38:00,3/8/2024 13:55:00,0:17:00
+Brancol,3,3,brancol_2024-03-05_set_3,3/9/2024,Both cameras have been intentionally hidden for the catch between 01:00pm and 01:06pm) : we can't identify the catch.,Camera Blocked,3/9/2024 13:00:00,3/9/2024 13:06:00,0:06:00
+Brancol,3,3,brancol_2024-03-05_set_3,3/9/2024,Break during hauling (01:43pm to 02:16pm for lunch break),Haul Stop,3/9/2024 13:43:00,3/9/2024 14:16:00,0:33:00
+Brancol,3,3,brancol_2024-03-05_set_3,3/9/2024,03:28pm (09/03) : a crew member jumped into the water (remove a knot in the helix ?),Other,3/9/2024 15:28:00,,
+Brancol,3,4,brancol_2024-03-05_set_4,3/10/2024,Start of the setting not filmed : hour mentioned in the table above is after the real hour of the setting,No Video,,,
+Brancol,3,4,brancol_2024-03-05_set_4,3/10/2024,No video for both cameras between 01:09pm and 01:35pm (10/03).,No Video,3/10/2024 13:09:00,3/10/2024 13:35:00,0:26:00
+Brancol,3,4,brancol_2024-03-05_set_4,3/10/2024,No video for both cameras between 02:30pm and 02:45pm (10/03).,No Video,3/10/2024 14:30:00,3/10/2024 14:45:00,0:15:00
+Brancol,3,5,brancol_2024-03-05_set_5,3/11/2024,Knot in the line between 12:22pm and 01:40pm (11/03),Gear Issue,3/11/2024 12:22:00,3/11/2024 13:40:00,1:18:00
+Brancol,3,5,brancol_2024-03-05_set_5,3/11/2024,Cameras off between 03:34pm and 04:15pm (11/03),No Video,3/11/2024 15:34:00,3/11/2024 16:15:00,0:41:00
+Brancol,3,6,brancol_2024-03-05_set_6,3/14/2024,Presence of an object in front of camera 2 which may be a problem for some identification : 14/03 from 06:46am to 08:49am.,Other,3/14/2024 6:46:00,3/14/2024 8:49:00,2:03:00
+Brancol,3,7,brancol_2024-03-05_set_7,3/15/2024,Cameras off between 11:45am and 11:55am (15/03).,No Video,3/15/2024 11:45:00,3/15/2024 11:55:00,0:10:00
+Brancol,3,7,brancol_2024-03-05_set_7,3/15/2024,Lunck break during hauling  15/03 between 02:18pm and 02:38pm.,Haul Stop,3/15/2024 14:18:00,3/15/2024 14:38:00,0:20:00
+Brancol,3,8,brancol_2024-03-05_set_8,3/16/2024,Break during hauling : 16/03 from 02:11pm and 02:42pm. ,Haul Stop,3/16/2024 14:11:00,3/16/2024 14:42:00,0:31:00
+Brancol,3,9,brancol_2024-03-05_set_9,3/17/2024,Break during hauling : 17/03 between 02:37pm and 03:00pm.,Haul Stop,3/17/2024 14:37:00,3/17/2024 15:00:00,0:23:00
+Brancol,3,10,brancol_2024-03-05_set_10,3/18/2024,Break during hauling 18/03 from 02:39pm  to 02:41pm ,Haul Stop,3/18/2024 14:39:00,3/18/2024 14:41:00,0:02:00
+Brancol,3,10,brancol_2024-03-05_set_10,3/18/2024,Break during hauling 18/03  from 04:11pm to 05:06pm.,Haul Stop,3/18/2024 16:11:00,3/18/2024 17:06:00,0:55:00
+Brancol,3,11,brancol_2024-03-05_set_11,3/19/2024,Break during hauling : 19/03 between 02:25pm and 02:42pm.,Haul Stop,3/19/2024 14:25:00,3/19/2024 14:42:00,0:17:00
+Brancol,3,12,brancol_2024-03-05_set_12,3/22/2024,CAM1 off during the setting. ,No Video,,,
+Brancol,3,13,brancol_2024-03-05_set_13,3/25/2024,No video on both cameras the 25/03 at 02:10pm during which there is a FAL catch.,No Video,3/25/2024 14:10:00,,-1089038:10:00
+Brancol,3,13,brancol_2024-03-05_set_13,3/25/2024,Presence of a FAD during the catch of the beacon at the end of hauling.,FAD,,,
+Brancol,3,14,brancol_2024-03-05_set_14,3/26/2024,Recovery of alive baits in a sea fish tank before setting.,Other,,,
+Brancol,3,15,brancol_2024-03-05_set_15,3/29/2024,Cameras off during hauling on 29/03 from 12:50pm and 01:15pm  lunch break and no catch,No Video,3/29/2024 12:50:00,3/29/2024 13:15:00,0:25:00
+Brancol,3,15,brancol_2024-03-05_set_15,3/29/2024,"CAM 1 higher than the other FOs, identification more difficult with this camera",Camera Blocked,,,
+Brancol,3,15,brancol_2024-03-05_set_15,3/29/2024,Data on the logbook not corresponding with reality of setting and hauling of this fishing operation,Elog Incorrect,,,
+Brancol,3,15,brancol_2024-03-05_set_15,3/29/2024,01:15pm lunch break and no catch because start back the hauling at 01:34pm.,Haul Stop,3/29/2024 13:15:00,3/29/2024 13:34:00,0:19:00
+Brancol,3,16,brancol_2024-03-05_set_16,3/30/2024,Beginning of the setting not filmed,No Vido,,,
+Brancol,3,16,brancol_2024-03-05_set_16,3/30/2024,Fishing with greenstick 1:45pm to 2:14pm,Other Gear,3/30/2024 13:45:00,3/30/2024 14:14:00,0:29:00
+Brancol,3,17,brancol_2024-03-05_set_17,3/30/2024,Fishing with greenstick 5:49pm to 6:34pm,Other Gear,3/30/2024 17:49:00,3/30/2024 18:34:00,0:45:00
+Brancol,3,18,brancol_2024-03-05_set_18,3/31/2024,Cloth hanged in front of CAM 2 --> catch brought on the vessel from starboard sometimes hidden by the cloth ,Camera Blocked,,,
