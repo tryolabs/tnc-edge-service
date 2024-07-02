@@ -1,5 +1,3 @@
-
-
 # Installation
 
 ## Development environment
@@ -14,7 +12,15 @@ $ source venv/bin/activate
 
 Build your own local postgres database. Most scripts allow a custom DB name (default `edge`) and a custom username (default `edge`).
 
-## On the Edge
+## Production environment
+
+This project is built to run on the edge on NVidia Jetson hardware. The systems run NVidia's Linux4Tegra distribution.
+
+The Specific hardware models are:
+ - `reComputer J4012 NVIDIA Jetson Orin™ NX 16GB` 
+ - `reComputer J2021 NVIDIA Jetson Xavier NX 8GB`
+
+Installation is handled by two bash scripts. These scripts are idempotent and check for some fatal errors if preconditions are not met. The scripts also include optional arguments, use `--help` for details.
 
 Run `scripts/system_install.sh`
 
@@ -42,7 +48,7 @@ Some files in this root folder exist to support libraries, tools, or environment
 
 ## Commands
 
-Some files in this root folder are standalone commands.
+These files in this root folder are standalone commands and entry-points for the microservices of the project:
 
 - edge_http.py
   - Primary entrypoint for the HTTP server on the edge.
@@ -79,4 +85,6 @@ Some files in this root folder are standalone commands.
   - Copies video files to the local drive
 
 
+## Additional Info
 
+Please see the TNC [box.com final-products folder](app.box.com/folder/255558380555) for more info about the project.
