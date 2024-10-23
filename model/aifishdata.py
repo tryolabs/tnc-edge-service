@@ -1,11 +1,12 @@
+from sqlalchemy import REAL, Column, DateTime, ForeignKey, Integer, String, text
+from sqlalchemy.orm import relationship
+
 from .base import Base
 from .videofiles import VideoFile
 
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, text, REAL
-from sqlalchemy.orm import relationship
 
 class AifishData(Base):
-    __tablename__ = 'aifishdata'
+    __tablename__ = "aifishdata"
 
     id = Column(Integer, primary_key=True)
     video_uri = Column(String, ForeignKey("video_files.decrypted_path"), unique=True)
@@ -19,18 +20,24 @@ class AifishData(Base):
     status = Column(String)
 
     def __str__(self) -> str:
-         return 'AifishData(' + ', '.join(
-            [n + '='+ str(self.__getattribute__(n)) for n in [
-                'id',
-                'video_uri',
-                # 'video_file',
-                'processing_uri',
-                'output_uri',
-                'datetime',
-                'count',
-                'runtimems',
-                'detection_confidence',
-                'status',
-                
-            ]]) + ')'
-
+        return (
+            "AifishData("
+            + ", ".join(
+                [
+                    n + "=" + str(self.__getattribute__(n))
+                    for n in [
+                        "id",
+                        "video_uri",
+                        # 'video_file',
+                        "processing_uri",
+                        "output_uri",
+                        "datetime",
+                        "count",
+                        "runtimems",
+                        "detection_confidence",
+                        "status",
+                    ]
+                ]
+            )
+            + ")"
+        )

@@ -1,17 +1,9 @@
-
-
-from .gps import GpsVector
-
-from .fish_ai import FishAiEventsComeInFourHourBurstsVector
-
-from .internet import InternetVector
-
+from .catchcountA import CatchCountA
+from .elogtimegaps import ElogTimeGapsVector
 from .equipment_outage_agg import EquipmentOutageAggVector
-
+from .fish_ai import FishAiEventsComeInFourHourBurstsVector
+from .gps import GpsVector
+from .internet import InternetVector
+from .tegrastats import TegrastatsVector
 from .thalos_mount import ThalosMountVector
 from .thalos_vids_exist import ThalosVideosExistVector
-
-from .elogtimegaps import ElogTimeGapsVector
-
-from .catchcountA import CatchCountA
-from .tegrastats import TegrastatsVector

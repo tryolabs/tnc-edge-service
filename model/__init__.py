@@ -1,20 +1,12 @@
-
+from .aifishdata import AifishData
 from .base import Base
-
-from .riskvector import RiskVector, RiskVectorModelView
-
-from .test import Test, T, TestModelView
-
-from .gpsdata import GpsData
-
+from .boatschedule import BoatSchedule
 from .deckhandeventraw import DeckhandEventRaw
 from .deckhandeventview import DeckhandEventView
-
-from .aifishdata import AifishData
-from .ondeckdata import OndeckData
-
+from .gpsdata import GpsData
 from .internetdata import InternetData, InternetDataView
-
-from .boatschedule import BoatSchedule
-from .videofiles import VideoFile
+from .ondeckdata import OndeckData
+from .riskvector import RiskVector, RiskVectorModelView
+from .test import T, Test, TestModelView
 from .track import Track
+from .videofiles import VideoFile

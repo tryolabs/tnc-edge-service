@@ -1,11 +1,10 @@
-from .base import Base
-from .videofiles import VideoFile
+from sqlalchemy import ARRAY, REAL, Column, DateTime, Integer, String, text
 
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, text, REAL, ARRAY
-from sqlalchemy.orm import relationship
+from .base import Base
+
 
 class Track(Base):
-    __tablename__ = 'tracks'
+    __tablename__ = "tracks"
 
     id = Column(Integer, primary_key=True)
     video_uri = Column(String)
@@ -19,13 +18,19 @@ class Track(Base):
     last_framenum = Column(Integer)
     confidences = Column(ARRAY(REAL))
 
-
     datetime = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
     # detection_confidence = Column(REAL)
 
     def __str__(self) -> str:
-         return 'Track(' + ', '.join(
-            [n + '='+ str(self.__getattribute__(n)) for n in [
-                'id',
-                
-            ]]) + ')'
+        return (
+            "Track("
+            + ", ".join(
+                [
+                    n + "=" + str(self.__getattribute__(n))
+                    for n in [
+                        "id",
+                    ]
+                ]
+            )
+            + ")"
+        )

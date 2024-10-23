@@ -1,3 +1,4 @@
+#!/bin/bash
 
 # see these documentation websites for each filter:
 # https://gstreamer.freedesktop.org/documentation/avi/avidemux.html
@@ -56,7 +57,7 @@ gst-launch-1.0 filesrc location="/videos/20240308T124000Z_cam1_reenc.mkv" ! matr
 
 20230912T133500Z_cam2_ondeck
 
-mkdir ./frames || rm ./frames/* 
+mkdir ./frames || rm ./frames/*
 gst-launch-1.0 filesrc location="$V" ! avidemux ! multifilesink index=1 location=./frames/%d.jpg
 
 
@@ -108,10 +109,8 @@ python3 -m http.server
 
 
 
-for i in 12-09-2023-15-05.avi.done 12-09-2023-15-10.avi.done 12-09-2023-15-15.avi.done 12-09-2023-15-20.avi.done 12-09-2023-15-25.avi.done 12-09-2023-15-30.avi.done 12-09-2023-15-35.avi.done 12-09-2023-15-40.avi.done 12-09-2023-15-55.avi.done ; do 
+for i in 12-09-2023-15-05.avi.done 12-09-2023-15-10.avi.done 12-09-2023-15-15.avi.done 12-09-2023-15-20.avi.done 12-09-2023-15-25.avi.done 12-09-2023-15-30.avi.done 12-09-2023-15-35.avi.done 12-09-2023-15-40.avi.done 12-09-2023-15-55.avi.done ; do
 rm /videos/frames/*
 gst-launch-1.0 filesrc location="/thalos/brancol/videos/cam2/12-09-2023/15/$i" ! avidemux ! multifilesink index=1 location=/videos/frames/%d.jpg
 tar czf ~/$i.tar.gz -C /videos/frames {1,480,960,1440,1920,2400,2880,3360,3840,4320}.jpg
 done
-
-

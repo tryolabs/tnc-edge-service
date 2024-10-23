@@ -1,14 +1,13 @@
 #!/bin/bash
 
+scriptdir="$(dirname -- "$(readlink -f -- "$0")")"
 
-scriptdir="$(dirname -- "$( readlink -f -- "$0")")"
-
-if [ "$UID" -lt 1000 ] ; then
+if [ "$UID" -lt 1000 ]; then
   echo "This script should be run as a non-root user with 'sudo' access"
   exit 1
 fi
 
-if ! [ -e "$scriptdir/secret_adduser_aifish.txt" ] ; then
+if ! [ -e "$scriptdir/secret_adduser_aifish.txt" ]; then
   echo "Cannot adduser without secrets file containing password"
   exit 1
 fi
@@ -46,4 +45,3 @@ EOF
 
 # on prod machines, user can only run docker commands
 # aifish ALL=NOPASSWD: /usr/bin/docker *
-

@@ -1,15 +1,19 @@
 import os
-from flask.config import Config as FlaskConfig
-flaskconfig = FlaskConfig(root_path='')
-
-flaskconfig.from_object('config.defaults')
-if 'ENVIRONMENT' in os.environ:
-    flaskconfig.from_envvar('ENVIRONMENT')
-
 
 import sqlalchemy as sa
-from model import Base as ModelBase, DeckhandEventView
+from flask.config import Config as FlaskConfig
 from sqlalchemy.orm import sessionmaker as SessionMaker
+
+from model import Base as ModelBase
+from model import DeckhandEventView
+
+flaskconfig = FlaskConfig(root_path="")
+
+flaskconfig.from_object("config.defaults")
+if "ENVIRONMENT" in os.environ:
+    flaskconfig.from_envvar("ENVIRONMENT")
+
+
 sa_engine = sa.create_engine("postgresql+psycopg2://ericfultz@/edge", echo=True)
 sessionmaker = SessionMaker(sa_engine)
 ModelBase.metadata.create_all(sa_engine)

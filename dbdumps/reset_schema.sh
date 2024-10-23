@@ -1,36 +1,34 @@
+#!/bin/bash
 
 SCRIPTNAME="$0"
-SCRIPTDIR="$(dirname -- "$( readlink -f -- "$0")")"
-
+SCRIPTDIR="$(dirname -- "$(readlink -f -- "$0")")"
 
 DBNAME=edge
 DBUSER=edge
 
-while (( "$#" )); do
+while (("$#")); do
    case $1 in
-      --dbuser)
-         shift && DBUSER="$1" || help
-         ;;
-      --dbname)
-         shift && DBNAME="$1" || help
-         ;;
-      *)
-          help
-          ;;
+   --dbuser)
+      shift && DBUSER="$1" || help
+      ;;
+   --dbname)
+      shift && DBNAME="$1" || help
+      ;;
+   *)
+      help
+      ;;
    esac
    shift
 done
 
-
 cd "$SCRIPTDIR/.."
 
-if [ "$VIRTUAL_ENV" != "$(pwd)/venv" ] ; then
-  if [ "x$VIRTUAL_ENV" != "x" ] ; then
-    deactivate
-  fi
-  source venv/bin/activate
+if [ "$VIRTUAL_ENV" != "$(pwd)/venv" ]; then
+   if [ "x$VIRTUAL_ENV" != "x" ]; then
+      deactivate
+   fi
+   source venv/bin/activate
 fi
-
 
 python -c 'from sqlalchemy import create_engine; \
 from model import Base; \

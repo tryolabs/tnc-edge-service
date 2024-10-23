@@ -1,14 +1,13 @@
 #!/bin/bash
 
+scriptdir="$(dirname -- "$(readlink -f -- "$0")")"
 
-scriptdir="$(dirname -- "$( readlink -f -- "$0")")"
-
-if [ "$UID" -lt 1000 ] ; then
+if [ "$UID" -lt 1000 ]; then
   echo "This script should be run as a non-root user with 'sudo' access"
   exit 1
 fi
 
-if ! [ -e "$scriptdir/secret_adduser_ondeck.txt" ] ; then
+if ! [ -e "$scriptdir/secret_adduser_ondeck.txt" ]; then
   echo "Cannot adduser without secrets file containing password"
   exit 1
 fi
@@ -43,10 +42,9 @@ EOF
 
 # ondeck ALL=NOPASSWD: /usr/bin/docker *
 
-
 gapp_creds_config_line=$(sudo grep -E '^export GOOGLE_APPLICATION_CREDENTIALS=' "$USERHOME/.bashrc")
 
-if [ $? -eq 0 ] && [ "x$gapp_creds_config_line" != "x" ] ; then
+if [ $? -eq 0 ] && [ "x$gapp_creds_config_line" != "x" ]; then
   # eval to make this value available in this script
   eval "$gapp_creds_config_line"
 else
@@ -60,8 +58,8 @@ EOF
   GOOGLE_APPLICATION_CREDENTIALS="$USERHOME/google_application_credentials.json"
 fi
 
-if ! [ -e "$GOOGLE_APPLICATION_CREDENTIALS" ] ; then
-  if ! [ -e "$scriptdir/secret_ondeck_gcr_token.json" ]  ; then
+if ! [ -e "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
+  if ! [ -e "$scriptdir/secret_ondeck_gcr_token.json" ]; then
     echo "cannot find and cannot install google app creds json file!"
     echo "make the creds available in this scripts dir and rerun this script"
     exit 1
@@ -69,5 +67,3 @@ if ! [ -e "$GOOGLE_APPLICATION_CREDENTIALS" ] ; then
   sudo cp "$scriptdir/secret_ondeck_gcr_token.json" "$GOOGLE_APPLICATION_CREDENTIALS"
   sudo chown ondeck:ondeck "$GOOGLE_APPLICATION_CREDENTIALS"
 fi
-
-

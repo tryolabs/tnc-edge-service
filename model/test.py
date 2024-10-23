@@ -1,11 +1,10 @@
-from .base import Base
-
-from .riskvector import RiskVector
-
 from enum import Enum as PyEnum
 
+from sqlalchemy import Column, DateTime, Enum, Float, ForeignKey, Integer, String, text
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, Enum, ForeignKey, Float, DateTime, text
+
+from .base import Base
+from .riskvector import RiskVector
 
 
 class T(PyEnum):
@@ -15,7 +14,7 @@ class T(PyEnum):
 
 
 class Test(Base):
-    __tablename__ = 'tests'
+    __tablename__ = "tests"
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
@@ -30,28 +29,68 @@ class Test(Base):
     # fk = ForeignKeyConstraint(['id'], [RiskVector.id])
 
     def __str__(self) -> str:
-        return 'Test(' + ', '.join(
-        [n + '='+ str(self.__getattribute__(n)) for n in [
-            'id',
-            'name',
-            'type',
-            'vector_id',
-            'datetime',
-        ]]) + ')'
+        return (
+            "Test("
+            + ", ".join(
+                [
+                    n + "=" + str(self.__getattribute__(n))
+                    for n in [
+                        "id",
+                        "name",
+                        "type",
+                        "vector_id",
+                        "datetime",
+                    ]
+                ]
+            )
+            + ")"
+        )
 
 
 from flask_admin.contrib.sqla import ModelView
 
+
 class TestModelView(ModelView):
-    def __init__(self, session, name=None, category=None, endpoint=None, url=None, static_folder=None, menu_class_name=None, menu_icon_type=None, menu_icon_value=None):
-         super().__init__(Test, session, name, category, endpoint, url, static_folder, menu_class_name, menu_icon_type, menu_icon_value)
+    def __init__(
+        self,
+        session,
+        name=None,
+        category=None,
+        endpoint=None,
+        url=None,
+        static_folder=None,
+        menu_class_name=None,
+        menu_icon_type=None,
+        menu_icon_value=None,
+    ):
+        super().__init__(
+            Test,
+            session,
+            name,
+            category,
+            endpoint,
+            url,
+            static_folder,
+            menu_class_name,
+            menu_icon_type,
+            menu_icon_value,
+        )
+
     can_delete = True
     column_display_pk = True
     column_hide_backrefs = False
-    column_list = ["id","name","type","vector", "score", "detail", "datetime_from", "datetime_to", "datetime"]
+    column_list = [
+        "id",
+        "name",
+        "type",
+        "vector",
+        "score",
+        "detail",
+        "datetime_from",
+        "datetime_to",
+        "datetime",
+    ]
     column_searchable_list = ["name"]
     column_filters = ["vector_id", "datetime"]
     # column_select_related_list=['vector']
     # inline_models = (RiskVector,)
-    
-

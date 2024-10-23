@@ -1,27 +1,10 @@
-# from flask import Flask
-# from flask_admin import Admin
 import click
-
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
-import os
 
-from model import Base, RiskVector, Test, T
-
-import sqlite3
-
+from model import Base, FishAiData, GpsData, InternetData, RiskVector, Test
 from model.internetdata import InternetData
-from model import FishAiData, InternetData, GpsData
 
-# app = Flask(__name__)
-# app.config.from_object('config.defaults')
-
-# if 'ENVIRONMENT' in os.environ:
-#     app.config.from_envvar('ENVIRONMENT')
-
-
-# set optional bootswatch theme
-# app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
 
 def clear_db(session: Session):
     result = session.execute(select(Test))
@@ -48,20 +31,20 @@ def clear_db(session: Session):
 
 
 @click.command()
-@click.option('--cleardb', default=False, is_flag=True)
-@click.option('--dbname', default="edge")
-@click.option('--dbuser', default="edge")
-@click.option('--force', default=False, is_flag=True)
+@click.option("--cleardb", default=False, is_flag=True)
+@click.option("--dbname", default="edge")
+@click.option("--dbuser", default="edge")
+@click.option("--force", default=False, is_flag=True)
 def cli(cleardb, dbname, dbuser, force):
-
-    if not force :
+    if not force:
         import sys
+
         print("This script is deprecated! run `venv/bin/alembic upgrade head` instead.")
         print("if you really want to run this script, rerun with --force")
         sys.exit(1)
-    
+
     # engine = create_engine("sqlite:///db.db", echo=True)
-    engine = create_engine("postgresql+psycopg2://%s@/%s"%(dbuser, dbname), echo=True)
+    engine = create_engine("postgresql+psycopg2://%s@/%s" % (dbuser, dbname), echo=True)
     SessionMaker = sessionmaker(engine)
     session = SessionMaker()
     if cleardb:
